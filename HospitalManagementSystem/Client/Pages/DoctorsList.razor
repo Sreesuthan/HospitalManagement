@@ -1,0 +1,137 @@
+﻿@page "/doctorlist"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject IJSRuntime Js
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+	    <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">View Doctors</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                if(doctors.Count != 0)
+                {
+                    <RadzenDataGrid Data="@doctors" TItem="ApplicationUser">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="FirstName" Title="Name" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="Specialist" Title="Specialist In" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="ConsultingTime" Title="Consulting Time" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="PhoneNo" Title="Mobile No." />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="Email" Title="Email" />
+                                <RadzenDataGridColumn TItem="ApplicationUser" Title="View">
+                                    <Template Context="doctors">
+                                        <RadzenButton Click="() => ViewDoctor(doctors.Id)" ButtonStyle="ButtonStyle.Primary">View</RadzenButton>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ApplicationUser" Title="Status">
+                                    <Template Context="doctors">
+                                        <RadzenButton Click="() => BlockUser(doctors.Id, doctors.IsBlocked)" ButtonStyle="ButtonStyle.Primary">@(doctors.IsBlocked ? "Inactive" : "Active")</RadzenButton>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="ApplicationUser" Title="Delete">
+                                    <Template Context="doctors">
+                                        <RadzenButton Click="() => DeleteUser(doctors.Id)" Icon="delete" ButtonStyle="ButtonStyle.Danger" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Doctors Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<ApplicationUser> doctors = new List<ApplicationUser>();
+    ApplicationUser doctor = new ApplicationUser();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<ApplicationUser>>("api/User/doctors");
+        if (result != null)
+        {
+            doctors = result;
+        }
+    }
+
+    void ViewDoctor(int id)
+    {
+        navigationManager.NavigateTo($"viewdoctor/{id}");
+    }
+
+    private async Task DeleteUser(int id)
+    {
+        if (!await Js.InvokeAsync<bool>("confirm", "Are you want to Delete this doctor?"))
+        {
+            return;
+        }
+        else
+        {
+            var response = await Http.DeleteAsync($"api/User/{id}");
+            var result = await response.Content.ReadFromJsonAsync<List<ApplicationUser>>();
+            if (result != null)
+            {
+                doctors = result.Where(r => r.Role.Equals("Doctor")).ToList();
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Doctor Deleted Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+            }
+        }
+    }
+
+    private async Task BlockUser(int id, bool isBlocked)
+    {
+        if (isBlocked)
+        {
+            if (!await Js.InvokeAsync<bool>("confirm", "Are you want to chage this doctor's status to active?"))
+            {
+                return;
+            }
+            else
+            {
+                doctor.IsBlocked = false;
+                doctor.Id = id;
+                var result = await Http.PutAsJsonAsync("api/User", doctor);
+                var response = await result.Content.ReadFromJsonAsync<List<ApplicationUser>>();
+                if (response != null)
+                {
+                    doctors = response.Where(r => r.Role.Equals("Doctor")).ToList();
+                    NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Doctor's Status Changed Successfully...!", Duration = 10000 };
+                    notificationService.Notify(message);
+                }
+            }
+        }
+        else
+        {
+            if (!await Js.InvokeAsync<bool>("confirm", "Are you want to chage this doctor's status to inactive?"))
+            {
+                return;
+            }
+            else
+            {
+                doctor.IsBlocked = true;
+                doctor.Id = id;
+                var result = await Http.PutAsJsonAsync("api/User", doctor);
+                var response = await result.Content.ReadFromJsonAsync<List<ApplicationUser>>();
+                if (response != null)
+                {
+                    doctors = response.Where(r => r.Role.Equals("Doctor")).ToList();
+                    NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Doctor's Status Changed Successfully...!", Duration = 10000 };
+                    notificationService.Notify(message);
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,71 @@
+﻿@page "/patienthistories"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+        <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">Appoinment Requests</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                    if (patientHistories.Count != 0)
+                {
+                        <RadzenDataGrid Data="@patientHistories" TItem="PatientHistory">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="PatientHistory" Property="FirstName" Title="Doctor Name" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Property="ConsultingTime" Title="Visited Time" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Title="VisitedDate" >
+                                    <Template Context="patientHistories">
+                                        @patientHistories.Date.ToShortDateString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="PatientHistory" Property="VisitedFor" Title="Visited For" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Title="Action">
+                                    <Template Context="patientHistories">
+                                        <RadzenButton Click="() => ViewHistory(patientHistories.Id)" ButtonStyle="ButtonStyle.Primary">View</RadzenButton>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                            <RadzenText TextStyle="TextStyle.H6" class="mt-2">You not visited yet...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<PatientHistory> patientHistories = new List<PatientHistory>();
+
+    public string PatientUserName { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userDetails = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+        if (userDetails != null && userDetails.IsAuthenticated)
+        {
+            PatientUserName = userDetails.Name;
+            var result = await Http.GetFromJsonAsync<List<PatientHistory>>("api/PatientHistory/patienthistories");
+            if (result != null)
+            {
+                patientHistories = result.Where(r => r.PatientUserName.Equals(PatientUserName)).ToList();
+            }
+        }
+    }
+
+    void ViewHistory(int id)
+    {
+        navigationManager.NavigateTo($"viewhistory/{id}");
+    }
+}

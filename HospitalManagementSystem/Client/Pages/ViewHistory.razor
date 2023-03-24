@@ -1,0 +1,250 @@
+﻿@page "/viewhistory/{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="10">
+            <MudGrid Spacing="1">
+                <MudItem xs="12" Class="mt-2">
+                    <RadzenText TextStyle="TextStyle.H4"><b>Patient Report</b></RadzenText>
+                </MudItem>
+                <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H5" class="mt-2"><b>Doctor Information</b></RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Doctor Name</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@patient.UserName</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Specialist In</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@patient.Specialist</RadzenText>
+                </MudItem>
+            </MudGrid>
+            <hr />
+            <MudGrid Class="mt-2">
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H5" class="mt-2" ><b>Patient Information</b></RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Patient Name</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.FirstName @patient.LastName</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Gender</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.Gender</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Age</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.Age</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Mobile No.</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.PhoneNo</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Email</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.Email</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Date</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.Date.ToShortDateString()</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Time</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.ConsultingTime</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Visit For</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.VisitedFor</RadzenText>
+            </MudItem>
+                <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H5"><b>Test Details</b></RadzenText>
+                </MudItem>
+                <MudItem xs="2" >
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Height (cm)</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.Height</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Weight (Kg)</b></RadzenText>
+                </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.Weight</RadzenText>
+                </MudItem>
+                        <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Temparature (F)</b></RadzenText>
+                </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.TemperatureF</RadzenText>
+                </MudItem>
+                        <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Blood Preasure</b></RadzenText>
+                </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.BPLevel</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Blood Sugar Level</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2"><b>@patient.SugarBeforeFood</b> in Before food and <b>@patient.SugarAfterFood</b> in After Food.</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Comments</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2">@patient.Comments</RadzenText>
+                </MudItem>
+                <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H5" class="mt-2"><b>Prescriped Medicines</b></RadzenText>
+                </MudItem>
+                <MudItem xs="12">
+                    <RadzenDataGrid Data="@prescripedMedicines" TItem="PrescripedMedicine">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Name" Title="Medicine Name" />
+                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="MfgDate" Title="Mfg. Date">
+                                <Template Context="medicines">
+                                    @medicines.MfgDate.ToShortDateString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="ExpDate" Title="Exp. Date">
+                                <Template Context="medicines">
+                                    @medicines.ExpDate.ToShortDateString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Quantity" Title="Quantity" />
+                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Price" Title="Price" />
+                        </Columns>
+                    </RadzenDataGrid>
+                </MudItem>
+                @{
+                    if(prescripedMedicines.Count != 0)
+                    {
+                        foreach (var medicine in prescripedMedicines)
+                        {
+                            TotalBill = TotalBill + (medicine.Price * medicine.Quantity);
+                        }
+                    }
+                }
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Total Bill</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="9">
+                    <RadzenText TextStyle="TextStyle.Body2">Rs. @TotalBill</RadzenText>
+                </MudItem>
+                <MudItem xs="12" Class="text-center">
+                    <RadzenButton Icon="arroe_back" Style="width:100px;" Click="()=>GoBack()" class="mt-2">Back</RadzenButton>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    PatientHistory patient = new PatientHistory();
+    List<PrescripedMedicine> prescripedMedicines = new List<PrescripedMedicine>(); 
+    public Decimal TotalBill { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await Http.GetFromJsonAsync<PatientHistory>($"api/PatientHistory/patienthistory/{Id}");
+        if (result != null)
+        {
+            patient = result;
+        }
+
+        var result1 = await Http.GetFromJsonAsync<List<PrescripedMedicine>>($"api/PatientHistory/prescripedmedicines");
+        if (result1 != null)
+        {
+            prescripedMedicines = result1.Where(r => r.PatientUserName.Equals(patient.PatientUserName) && r.ConsultingTime.Equals(patient.ConsultingTime) && r.Date.Equals(patient.Date)).ToList();
+        }
+    }
+
+    void GoBack()
+    {
+        navigationManager.NavigateTo("patienthistories");
+    }
+}

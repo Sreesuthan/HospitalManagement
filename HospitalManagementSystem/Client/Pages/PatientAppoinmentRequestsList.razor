@@ -1,0 +1,68 @@
+﻿@page "/requestlist"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject Radzen.DialogService DialogService
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+	    <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">Appoinment Requests</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                if (appointments.Count != 0)
+                {
+                    <RadzenDataGrid Data="@appointments" TItem="Appointment">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="Appointment" Property="PatientUserName" Title="Patient Name" />
+                            <RadzenDataGridColumn TItem="Appointment" Property="ConsultingTime" Title="Requested Consulting Time" />
+                            <RadzenDataGridColumn TItem="Appointment" Title="Requested Consulting Date" >
+                                <Template Context="appointments">
+                                    @appointments.Date.ToShortDateString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Appointment" Property="VisitingFor" Title="Visiting For" />
+                            <RadzenDataGridColumn TItem="Appointment" Title="Status">
+                                <Template Context="appointments">
+                                    @(appointments.IsConfirmed ? "Accepted" : "Pending")
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Appoinments Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<Appointment> appointments = new List<Appointment>();
+    Appointment appointment = new Appointment();
+    public string Patient { get; set; } = string.Empty;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        var userDetails = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+        if (userDetails != null && userDetails.IsAuthenticated)
+        {
+            Patient = userDetails.Name;
+            var result = await Http.GetFromJsonAsync<List<Appointment>>("api/Appointment/appointments");
+            if (result != null)
+            {
+                appointments = result.Where(r => r.PatientUserName.Equals(Patient)).ToList();
+            }
+        }
+    }
+}

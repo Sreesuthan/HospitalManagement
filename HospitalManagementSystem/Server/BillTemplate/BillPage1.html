@@ -1,0 +1,179 @@
+﻿<!--<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>bill receipt</title>
+</head>
+<body>
+    <div style="padding: 25px; border: solid 1px; border-radius: 10px;">
+        <div>
+            <div style="text-align:center;">
+                <img src="images\logo.webp" alt="logo" width="100" height="80">
+                <h1>quality care hospital</h1>
+            </div>
+            <div>
+                <h2>receipt for medcines <span style="float:right; font-size:16px;">invoice no. inv00{inv}</span></h2>
+            </div>
+            <hr>
+            <div>
+                <div style="font-weight:700">
+                    <h3><strong>patient details:<span style="float:right;"><b>date:</b></span></strong></h3>
+                </div>
+                <div>
+                    {firstname} {lastname},<span style="float:right;">{date}</span><br>
+                    {address},<br>
+                    {city} {zip},<br>
+                    {state},<br>
+                    {phone}.
+                </div>
+            </div>
+            <div style="margin-top:20px;">
+                <div style="font-weight:700">
+                    <h3><strong>consulted by:</strong></h3>
+                </div>
+                <div>
+                    {dfirstname} {dlastname},<br>
+                    {specialist},<br>
+                    quality care hospital,<br>
+                    chennai-28.
+                </div>
+            </div>
+        </div>
+
+        <div >
+                <div>
+                    <div style="margin-bottom:10px" >
+                        <h2><strong>order summary</strong></h2>
+                    </div>
+                    <div class="panel-body">
+                            <table style=" border-collapse: collapse; width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #ddd; padding-left:10px; "><strong>item</strong></th>
+                                        <th style=" padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #ddd; text-align:center;"><strong>price</strong></th>
+                                        <th style="padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #ddd; text-align: center; "><strong>quantity</strong></th>
+                                        <th style="padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #ddd; padding-right: 20px; text-align: right; " ><strong>totals</strong></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding-top: 12px; padding-bottom: 12px; text-align: left; padding-left:10px; ">{name}</td>
+                                        <td style=" padding-top: 12px; padding-bottom: 12px; text-align: left; text-align:center;">rs. {price}</td>
+                                        <td style="padding-top: 12px; padding-bottom: 12px; text-align: left; text-align: center;">{quantity}</td>
+                                        <td style="padding-top: 12px; padding-bottom: 12px; text-align: left; padding-right: 20px; text-align: right;">rs. {total}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border-top: 2px solid;"></td>
+                                        <td style="border-top: 2px solid;"></td>
+                                        <td style="border-top: 2px solid; padding-top: 12px; padding-bottom: 12px; text-align: left; text-align: center;"><strong>subtotal</strong></td>
+                                        <td style="border-top: 2px solid; padding-top: 12px; padding-bottom: 12px; text-align: left; padding-right: 20px; text-align: right;">rs. {stotal}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border-top: none;"></td>
+                                        <td style="border-top: none;"></td>
+                                        <td style="border-top: none; padding-top: 12px; padding-bottom: 12px; text-align: left; text-align: center;"><strong>consultation fees</strong></td>
+                                        <td style="border-top: none; padding-top: 12px; padding-bottom: 12px; text-align: left; padding-right: 20px; text-align: right;">rs. {consfee}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border-top: none;"></td>
+                                        <td style="border-top: none;"></td>
+                                        <td style="border-top: none; padding-top: 12px; padding-bottom: 12px; text-align: left; text-align: center;"><strong>gst ({gstpers}%)</strong></td>
+                                        <td style="border-top: none; padding-top: 12px; padding-bottom: 12px; text-align: left; padding-right: 20px; text-align: right;">rs. {gst}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border-top: none;"></td>
+                                        <td style="border-top: none;"></td>
+                                        <td style="border-top: none; padding-top: 12px; padding-bottom: 12px; text-align: left; text-align: center;"><strong>total</strong></td>
+                                        <td style="border-top: none; padding-top: 12px; padding-bottom: 12px; text-align: left; padding-right: 20px; text-align: right;">rs. {totalbill}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                    </div>
+                </div>
+        </div>
+    </div>
+</body>
+</html>-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Bill Receipt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container border mt-4 mb-4">
+        <div class="row">
+            <div class="col-lg-12 mt-2">
+                <div class="row">
+                    <div class="col-lg-2">
+                        <img src="{imgurl}" alt="logo" width="100" height="80">
+                    </div>
+                    <div class="col-lg-8 mt-3 text-center">
+                        <h1>QUALITY CARE HOSPITAL</h1>
+                    </div>
+                    <div class="col-lg-2 text-end">
+                        <img src="{imgurl}" alt="logo" width="100" height="80">
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h3>Receipt For Medcines:</h3>
+                        </div>
+                        <div class="col-lg-6 text-end">
+                            <h5 class="mt-2">Invoice no. INV00{inv}</h5>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <address>
+                            <strong>Patient details:</strong><br>
+                            {firstname} {lastname},<br>
+                            {address},<br>
+                            {city} {zip},<br>
+                            {state},<br>
+                            {phone}.
+                        </address>
+                    </div>
+                    <div class="col-lg-6 text-end">
+                        <address>
+                            <strong>Date:</strong><br>
+                            {date}<br><br>
+                        </address>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <address>
+                            <strong>Consulted by:</strong><br>
+                            {dfirstname} {dlastname},<br>
+                            {specialist},<br>
+                            Quality Care hospital,<br>
+                            Chennai-28.
+                        </address>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><strong>Order summary</strong></h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="table-responsive">
+                            <table class="table table-condensed border">
+                                <thead>
+                                    <tr>
+                                        <td style="background-color: #ddd; "><strong>Item</strong></td>
+                                        <td style=" background-color: #ddd;" class="text-center"><strong>Rate</strong></td>
+                                        <td style="background-color: #ddd; " class="text-center"><strong>Quantity</strong></td>
+                                        <td style="background-color: #ddd; " class="text-right"><strong>Amount</strong></td>
+                                    </tr>
+                                </thead>
+                                <tbody>

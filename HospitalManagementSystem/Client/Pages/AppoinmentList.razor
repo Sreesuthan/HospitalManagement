@@ -1,0 +1,85 @@
+﻿@page "/appoinments"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject Radzen.DialogService DialogService
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+        <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">Appoinment Requests</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                if (appointments.Count != 0)
+                {
+                    <RadzenDataGrid Data="@appointments" TItem="Appointment">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="Appointment" Property="FirstName" Title="Patient Name" />
+                                <RadzenDataGridColumn TItem="Appointment" Property="Age" Title="Age" />
+                                <RadzenDataGridColumn TItem="Appointment" Property="Gender" Title="Gender" />
+                                <RadzenDataGridColumn TItem="Appointment" Property="VisitingFor" Title="Visiting For" />
+                                <RadzenDataGridColumn TItem="Appointment" Title="Status">
+                                    <Template Context="appointments">@(appointments.IsNew ? "New Patient" : "Follow up patient")</Template>
+                                </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="Appointment" Property="ConsultingTime" Title="Consulting Time" />
+                                <RadzenDataGridColumn TItem="Appointment" Title="Consulting Date" >
+                                    <Template Context="appointments">@appointments.Date.ToShortDateString()</Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Appointment" Property="PhoneNo" Title="Contact" />
+                            <RadzenDataGridColumn TItem="Appointment" Title="Action">
+                                <Template Context="appointments">
+                                    <RadzenButton Click="() => ViewPatient(appointments.Id)" ButtonStyle="ButtonStyle.Primary">View</RadzenButton>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                            <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Appoinments Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<Appointment> appointments = new List<Appointment>();
+    Appointment appointment = new Appointment();
+    ApplicationUser doctor = new ApplicationUser();
+
+    public string Doctor { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userDetails = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+        if (userDetails != null && userDetails.IsAuthenticated)
+        {
+            Doctor = userDetails.Name;
+            var result1 = await Http.GetFromJsonAsync<ApplicationUser>($"api/User/doctor/username/{Doctor}");
+            if (result1 != null)
+            {
+                doctor = result1;
+            }
+
+            var result = await Http.GetFromJsonAsync<List<Appointment>>("api/Appointment/patientsdetails");
+            if (result != null)
+            {
+                appointments = result.Where(r => r.IsConfirmed && r.DocterId.Equals(doctor.Id)).ToList();
+            }
+        }
+    }
+
+    void ViewPatient(int id)
+    {
+        navigationManager.NavigateTo($"viewpatient/{id}");
+    }
+}

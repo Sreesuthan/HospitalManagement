@@ -1,0 +1,81 @@
+﻿@page "/updateemail"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject IJSRuntime Js
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="8">
+            <RadzenTemplateForm Data="@admin" TItem="ApplicationUser" Submit="HandleSubmit">
+                <MudGrid Justify="Justify.Center" Class="mt-2">
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.H4"><b>Update Email</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.H6"><b>Current Email :</b> @admin.Email</RadzenText>
+                    </MudItem>
+                    <MudItem xs="3" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Email</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="9">
+                        <RadzenTextBox @bind-Value="admin.Email" MaxLength="50" Placeholder="Enter Email" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="3" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Password</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="9">
+                        <RadzenPassword @bind-Value="admin.EmailPassword" Placeholder="Enter Password" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="12" Class="text-center">
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Style="width:100px;" class="mt-2">Update</RadzenButton>
+                    </MudItem>
+                </MudGrid>
+            </RadzenTemplateForm>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    ApplicationUser admin = new ApplicationUser();
+    private string InitialEmail { get; set; } = string.Empty;
+    private string InitialPassword { get; set; } = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<ApplicationUser>>($"api/User");
+        if (result != null)
+        {
+            var result1 = result.FirstOrDefault(r => r.Role.Equals("Admin"));
+            if (result1 != null)
+            {
+                admin = result1;
+                InitialEmail = admin.Email;
+                InitialPassword = admin.EmailPassword;
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (admin.Email != InitialEmail || admin.EmailPassword != InitialPassword)
+        {
+            var response = await Http.PutAsJsonAsync("api/User/admin", admin);
+            if (response.IsSuccessStatusCode)
+            {
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Admin Email Updated Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+                navigationManager.NavigateTo("/");
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Please change Email or Password and try again...!", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("updateemail");
+        }
+    }
+}

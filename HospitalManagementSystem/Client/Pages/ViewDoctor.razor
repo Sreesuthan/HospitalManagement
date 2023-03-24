@@ -1,0 +1,145 @@
+﻿@page "/viewdoctor/{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="10">
+            <MudGrid Spacing="1">
+                <MudItem xs="12" Class="mt-2">
+                    <RadzenText TextStyle="TextStyle.H4"><b>Doctor Details</b></RadzenText>
+                </MudItem>
+                <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H5" class="mt-2"><b>Personal Details</b></RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Full Name</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="9">
+                    <RadzenText TextStyle="TextStyle.Body2">@doctor.FirstName @doctor.LastName</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Specialist In</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@doctor.Specialist</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Consulting Time</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@doctor.ConsultingTime</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Experience</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@doctor.Experience</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Education</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@doctor.Qualification</RadzenText>
+                </MudItem>
+            </MudGrid>
+            <hr />
+            <MudGrid Class="mt-2">
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H5" class="mt-2" ><b>Address and Contact Details</b></RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Address</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2">@doctor.Address</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>City</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@doctor.City - @doctor.Zip</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>State</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@doctor.State</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Mobile No.</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@doctor.PhoneNo</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Email</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@doctor.Email</RadzenText>
+            </MudItem>
+                <MudItem xs="12" Class="text-center">
+                    <RadzenButton Icon="arroe_back" Style="width:100px;" Click="()=>GoBack()" class="mt-2">Back</RadzenButton>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    ApplicationUser doctor = new ApplicationUser();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await Http.GetFromJsonAsync<ApplicationUser>($"api/User/doctor/{Id}");
+        if (result != null)
+        {
+            doctor = result;
+        }
+    }
+
+    void GoBack()
+    {
+        navigationManager.NavigateTo("doctorlist");
+    }
+}

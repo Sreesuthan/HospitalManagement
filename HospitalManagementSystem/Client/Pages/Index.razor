@@ -1,0 +1,135 @@
+﻿@page "/"
+@page "/{isloggedout:bool}"
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="border rounded-lg">
+    <MudGrid Justify="Justify.Center" Class="mt-2">
+    <MudItem xs="2" Class="text-center">
+            <MudImage Src="Images/logo.webp" Fluid="true" Alt="Logo" Class="rounded-lg" />
+    </MudItem>
+        <MudItem xs="8" Class="mt-4">
+<MudText Typo="Typo.h3" Align="Align.Center"><b>Welcome to Quality Care hospital</b></MudText>
+        <MudText Typo="Typo.h5" Style="color:dimgrey" Align="Align.Center"><b>Healthcare for Good Today. Tomorrow. Always</b></MudText>
+    </MudItem>
+    <MudItem xs="2" Class="text-center">
+            <MudImage Src="Images/logo.webp" Fluid="true" Alt="Logo" Class="rounded-lg" />
+    </MudItem>
+    </MudGrid>
+<MudGrid Class="rounded-lg">
+    <MudItem xs="12">
+            <MudImage Src="Images/atrial-fibrillation-g6c002d3b6_1920.jpg" Fluid="true" Alt="Image" Class="rounded-lg" />
+    </MudItem>
+</MudGrid>
+<br />
+<MudGrid Class="rounded-lg">
+    <MudItem xs="12">
+            <MudText Typo="Typo.h4" Align="Align.Start"><b>Our Specialities</b></MudText>
+    </MudItem>
+    <br />
+    <MudItem xs="4">
+        <MudText Typo="Typo.h5" Align="Align.Start"><b>Clinical Research Centre</b></MudText>
+            <MudText Typo="Typo.h6" Align="Align.Start" Style="color:dimgrey">Quality Care Hospital is committed to providing state-of-the-art patient care. Our team is actively researching innovative and advanced treatment aimed at driving healthcare in a positive direction. This helps provide our patients with access to cutting-edge therapeutic services in all major specialities.</MudText>
+    </MudItem>
+    <MudItem xs="4">
+            <MudText Typo="Typo.h5" Align="Align.Start"><b>CSR At Quality Care Hospital</b></MudText>
+            <MudText Typo="Typo.h6" Align="Align.Start" Style="color:dimgrey">Quality Care Hospital has a long-standing commitment to Corporate Social Responsibility (CSR). We strive to constantly improve and make sure our business is integrated with the aims and objectives of CSR. Our goal is to impact the lives of people we work for and with. </MudText>
+        </MudItem>
+        <MudItem xs="4">
+            <MudText Typo="Typo.h5" Align="Align.Start"><b>Book an Appointment</b></MudText>
+            <MudText Typo="Typo.h6" Align="Align.Start" Style="color:dimgrey">Easily book an appointment with quality doctors.</MudText>
+        </MudItem>
+    <br />
+</MudGrid>
+<br />
+<hr>
+<br />
+<MudGrid Class="rounded-lg">
+    <MudItem xs="12">
+            <MudText Typo="Typo.h5" Align="Align.Center" Style="color:dimgrey" Class="mb-4">Our Hospitals in Trichy, Chennai, Hosur, Salem, Bangalore offer State-of-the-art infrastructure & medical expertise from our 335+ Doctors</MudText>
+    </MudItem>
+        <MudItem xs="6" Class="text-center">
+            <MudImage Src="images/overseas_patients1.jpg" Fluid="true" Alt="Image" Class="rounded-lg" />
+    </MudItem>
+    <MudItem xs="6">
+        <MudText Typo="Typo.h5" Align="Align.Start" Class="mb-2 mt-4"><b>Services</b></MudText>
+        <MudList>
+            <MudListItem>
+                    · At Quality Care Hospital our services are designed to provide a very special environment to enhance healing and encompassing the comfort of your home away from home.
+            </MudListItem>
+            <MudListItem>
+                    · Our team comprising of International Concierges, Interpreters, Billing Assistance.
+            </MudListItem>
+            <MudListItem>
+                    · Other associated non-medical staff are all trained to provide assistance efficiently.
+            </MudListItem>
+        </MudList>
+    </MudItem>
+    <MudItem xs="6">
+        <MudText Typo="Typo.h5" Align="Align.Start" Class="mb-2 mt-4"><b>Internatinal Patients</b></MudText>
+        <MudList>
+            <MudListItem>
+                · The Internatinal Patient Department is dedicated to ensuring that internatinal patients have a hassle free, comfortable medical journey.
+            </MudListItem>
+            <MudListItem>
+                · Our department works extensively with doctors and companies around the world.
+            </MudListItem>
+            <MudListItem>
+                · It provides access to quality healthcare at affordable prices.
+            </MudListItem>
+        </MudList>
+    </MudItem>
+    <MudItem xs="6" Class="text-center">
+            <MudImage Src="images/international-patient-services-india-min.jpg" Fluid="true" Alt="Image" Class="rounded-lg" />
+    </MudItem>
+</MudGrid>
+<br />
+    @if (!IsAuthenticated)
+    {
+        <hr>
+        <br />
+    <MudGrid Justify="Justify.Center" Class="rounded-lg">
+        <MudItem xs="10" Class="text-center rounded-3" Style="background-color:darkgrey">
+            <br />
+            <MudText Typo="Typo.h3"><b>For Appoitment?</b></MudText>
+            <MudText Typo="Typo.h4"><b>Register Now</b></MudText>
+            <br />
+                <MudButton Href="registration" Variant="MudBlazor.Variant.Filled" Color="Color.Info" Class="mr-4 mt-4" Size="Size.Large">Get Stared</MudButton>
+            <br />
+        </MudItem>
+    </MudGrid>
+    <br />
+}
+</MudContainer>
+
+
+@code{
+    [Parameter]
+    public bool isloggedout { get; set; }
+
+    public bool IsAuthenticated { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+        IsAuthenticated = user.IsAuthenticated;
+        if (isloggedout == true)
+		{
+			NotificationMessage message = new NotificationMessage
+				{
+					Severity = NotificationSeverity.Success,
+					Summary = "Logged Out Successfully...!", 
+					Duration = 10000 
+				};
+			notificationService.Notify(message);
+		}
+		else
+		{
+			isloggedout = false;
+		}
+	}
+}
+
+

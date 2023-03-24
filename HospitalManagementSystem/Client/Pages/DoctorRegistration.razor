@@ -1,0 +1,186 @@
+﻿@page "/doctorsignup"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+
+
+<div class="col-lg-7 ml-auto mr-auto border">
+	<div class="col-lg-11 ml-auto mr-auto">
+		<RadzenText TextStyle="TextStyle.H3" TextAlign="TextAlign.Center" class="mt-2 mb-4">Welcome to Hospital</RadzenText>
+
+        <RadzenTemplateForm Data="@register" TItem="DocRegister" Submit="HandleSubmit">
+            <RadzenCard class="mb-7">
+                <MudGrid Class="mb-4" Spacing="0">
+                    <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H4" class="border-bottom">Login Details</RadzenText>
+                    </MudItem>
+                    @{
+                        if (Error.Length > 0)
+                        {
+                            <MudItem xs="12">
+                                <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.Small" Variant="Radzen.Variant.Flat" Shade="Shade.Lighter">@Error</RadzenAlert>
+                            </MudItem>
+                        }
+                    }
+                    <MudItem xs="4" Class="mt-4 mb-6">
+                        <RadzenLabel Text="UserId" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8" Class="mt-4 mb-6">
+                        <RadzenTextBox @bind-Value="register.Username" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4" Class="mb-6">
+                        <RadzenLabel Text="Password" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8" Class="mb-6">
+                        <RadzenPassword @bind-Value="register.Password" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4" Class="mb-6">
+                        <RadzenLabel Text="Confirm Password" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8" Class="mb-6">
+                        <RadzenTextBox @bind-Value="register.ConfirmPassword" Style="width:100%;" />
+                    </MudItem>
+                </MudGrid>
+                <MudGrid>
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.H4" class="mb-4 border-bottom">Doctor Details</RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="First Name" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="register.FirstName" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Last Name" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="register.LastName" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Consulting Time" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenDropDown @bind-Value="register.ConsultingTime" Style="width:100%;" Data="times" TextProperty="Time" ValueProperty="Time" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Qualification" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="register.Qualification" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Experience" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="register.Experience" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Specialist In" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenDropDown @bind-Value="register.Specialist" Style="width:100%;" Data="diseases" TextProperty="Disease" ValueProperty="Disease" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Email" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="register.Email" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Phone No." class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="register.PhoneNo" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Address" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextArea @bind-Value="register.Address" Cols="30" Rows="2" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="City" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="register.City" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="State" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenDropDown @bind-Value="register.State" Style="width:100%;" Data="states" AllowFiltering="true" TextProperty="State" ValueProperty="State" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Zip" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="register.Zip" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="12" Class="text-center">
+                            <RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Style="width:100px;" class="mt-2">Register</RadzenButton>
+                    </MudItem>
+                </MudGrid>
+            </RadzenCard> 
+        </RadzenTemplateForm>
+	</div>
+</div>
+
+@code {
+    DocRegister register = new DocRegister();
+    List<States> states = new List<States>();
+    List<ConsultingTime> times = new List<ConsultingTime>
+    {
+        new ConsultingTime{ Id = 1, Time = "06:00 - 12:00"},
+        new ConsultingTime{ Id = 2, Time = "12:00 - 18:00"},
+        new ConsultingTime{ Id = 3, Time = "18:00 - 00:00"}
+    }; 
+    List<Diseases> diseases = new List<Diseases>
+    {
+        new Diseases{Id=1, Disease= "Pediatrician"},
+        new Diseases{Id=2, Disease= "Gynecologists"},
+        new Diseases{Id=3, Disease= "Child Psychologist/Psychiatrist"},
+        new Diseases{Id=4, Disease= "Dermatologist"},
+        new Diseases{Id=5, Disease= "Cardiologist"},
+        new Diseases{Id=6, Disease= "ENT Specialist"},
+        new Diseases{Id=7, Disease= "Neurologist"},
+        new Diseases{Id=8, Disease= "Therapist"},
+        new Diseases{Id=9, Disease= "Psychologist"},
+        new Diseases{Id=10, Disease= "Audiologist"},
+        new Diseases{Id=11, Disease= "Dentist "},
+        new Diseases{Id=12, Disease= "Allergist"},
+        new Diseases{Id=13, Disease= "Endocrinologist"}
+    };
+    public string Error { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<States>>("api/User/states");
+        if (result != null)
+        {
+            states = result;
+        }
+    }
+
+    public async Task HandleSubmit()
+    {
+        var response = await Http.PostAsJsonAsync("/api/User/docregister", register);
+        if (response.IsSuccessStatusCode)
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Registered Successfully...!", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("/doctorslist");
+        }
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            if (error != null)
+            {
+                Error = error;
+            }
+            navigationManager.NavigateTo("/doctorsigup");
+        }
+    }
+}

@@ -1,0 +1,138 @@
+﻿@page "/medicinelist"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject IJSRuntime Js
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="10">
+            <MudGrid Class="mb-4">
+                <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H4" class="mt-2"><b>Medicines List</b></RadzenText>
+                </MudItem>
+                <MudItem xs="8">
+                    <RadzenTextBox @bind-Value="MedicineName" MaxLength="50" Placeholder="Search by medicine name" Style="width:100%;" />
+                </MudItem>
+                <MudItem xs="4">
+                    <RadzenButton Click="()=>GetMedicines(MedicineName)" ButtonStyle="ButtonStyle.Primary" Icon="search"/>
+                    <RadzenButton Click="()=>Reset()" ButtonStyle="ButtonStyle.Secondary" Icon="refresh" class="ml-2" />
+                    <RadzenButton Click="() => ExportToExcel()" Icon="download" Text="Export to Excel" class="ml-2" Style="text-transform: none;" ButtonStyle="ButtonStyle.Info" />
+                </MudItem>
+                <MudItem xs="12">
+                    @{
+                        if (medicines.Count != 0)
+                        {
+                                <RadzenDataGrid Data="@medicines" AllowPaging="true" PageSize="10" AllowSorting="true" TItem="Medicines">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="Medicines" Property="Name" Title="Medicine Name" />
+                                    <RadzenDataGridColumn TItem="Medicines" Property="Price" Title="Price" />
+                                    <RadzenDataGridColumn TItem="Medicines" Property="MfgDate" Title="Mfg. Date" >
+                                        <Template Context="medicines">
+                                            @medicines.MfgDate.ToShortDateString()
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="Medicines" Property="ExpDate" Title="Exp. Date" >
+                                        <Template Context="medicines">
+                                            @medicines.ExpDate.ToShortDateString()
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="Medicines" Title="Available Count">
+                                        <Template Context="medicines">
+                                            @(medicines.AvailableMedicinesCount != 0 ? medicines.AvailableMedicinesCount : "Out of stock")
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="Medicines" Title="Update">
+                                        <Template Context="medicines">
+                                            <RadzenButton Click="() => Update(medicines.Id)" Icon="edit" ButtonStyle="ButtonStyle.Primary" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Medicines Found...</RadzenText>
+                        }
+                    }
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    List<Medicines> medicines = new List<Medicines>();
+    List<Export_Medicines> export_Medicines = new List<Export_Medicines>();
+    private string MedicineName { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<Medicines>>($"api/Medicines/medicines");
+        if (result != null)
+        {
+            medicines = result;
+        }
+    }
+
+    private async Task GetMedicines(string name)
+    {
+        if (name != "")
+        {
+            var result = await Http.GetFromJsonAsync<List<Medicines>>($"api/Medicines/medicines");
+            if (result != null)
+            {
+                medicines = result.Where(r => r.Name.ToLower().Contains(name.ToLower())).ToList();
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Please enter medicine name...",
+                    Duration = 10000
+                };
+            notificationService.Notify(message);
+        }
+    }
+
+    private async Task Reset()
+    {
+        var result = await Http.GetFromJsonAsync<List<Medicines>>($"api/Medicines/medicines");
+        if (result != null)
+        {
+            medicines = result;
+        }
+    }
+
+    void Update(int id)
+    {
+        navigationManager.NavigateTo($"updatemedicine/{id}");
+    }
+    
+    private async Task ExportToExcel()
+    {
+        var result = await Http.GetFromJsonAsync<List<Export_Medicines>>($"api/Medicines/medicines");
+        if (result != null)
+        {
+            export_Medicines = result;
+        }
+
+        var response = await Http.PostAsJsonAsync($"/api/Medicines/exporttoexcel", export_Medicines);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Js.InvokeVoidAsync("alert", "Error in export to excel file. Please try again.");
+        }
+        else
+        {
+            var fileStream = response.Content.ReadAsStream();
+            using var streamRef = new DotNetStreamReference(stream: fileStream);
+            await Js.InvokeVoidAsync("downloadFileFromStream", $"Medicines_{DateTime.Now.ToString("ddMMyyyy")}.xlsx", streamRef);
+        }
+    }
+}

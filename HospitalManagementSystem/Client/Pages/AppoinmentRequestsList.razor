@@ -1,0 +1,151 @@
+﻿@page "/appoinmentrequests"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject Radzen.DialogService DialogService
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+        <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">Appoinment Requests</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                if (appointments.Count != 0)
+                {
+                    <RadzenDataGrid Data="@appointments" TItem="Appointment">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="Appointment" Property="PatientUserName" Title="Patient Name" />
+                            <RadzenDataGridColumn TItem="Appointment" Property="ConsultingTime" Title="Requested Consulting Time" />
+                                <RadzenDataGridColumn TItem="Appointment" Title="Requested Consulting Date" >
+                                    <Template Context="appointments">@appointments.Date.ToShortDateString()</Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="Appointment" Property="VisitingFor" Title="Visiting For" />
+                            <RadzenDataGridColumn TItem="Appointment" Title="Action">
+                                <Template Context="appointments">
+                                    <RadzenButton Click="() => ShowDialog(appointments.Id)" ButtonStyle="ButtonStyle.Primary">Accept/Reject</RadzenButton>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                            <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Appoinment Requests Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<Appointment> appointments = new List<Appointment>();
+    Appointment appointment = new Appointment();
+    ApplicationUser doctor = new ApplicationUser();
+
+    public string Doctor { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userDetails = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+        if (userDetails != null && userDetails.IsAuthenticated)
+        {
+            Doctor = userDetails.Name;
+            var result1 = await Http.GetFromJsonAsync<ApplicationUser>($"api/User/doctor/username/{Doctor}");
+            if (result1 != null)
+            {
+                doctor = result1;
+            }
+
+            var result = await Http.GetFromJsonAsync<List<Appointment>>("api/Appointment/appointments");
+            if (result != null)
+            {
+                appointments = result.Where(r => r.DocterId == doctor.Id && r.IsConfirmed == false).ToList();
+            }
+        }
+    }
+
+    async Task ShowDialog(int id)
+    {
+        var result = await DialogService.OpenAsync("Appointment Request", ds =>
+    @<div>
+        <p class="mb-4">Are you wanna accept appointment request?</p>
+        <div class="row">
+            <div class="col">
+                <RadzenButton Text="Accept" Click="() => Accept(id)" class="me-1" ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton Text="Reject" Click="() => ShowDialog1(id, ds)" ButtonStyle="ButtonStyle.Danger" class="me-1" />
+                <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" class="me-1 float-end" />
+            </div>
+        </div>
+        </div>
+    );
+    }
+
+    async Task ShowDialog1(int id, Radzen.DialogService dialog)
+    {
+        dialog.Close();
+        var result = await DialogService.OpenAsync("Leave Request", ds =>
+    @<div>
+        <MudGrid Class="mb-2">
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.Body1">Are you wanna reject appointment request?</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">Reason</RadzenText>
+                <RadzenTextArea @bind-Value="appointment.RejectReason" Cols="30" Rows="3" Style="width:100%;" />
+            </MudItem>
+        </MudGrid>
+        <div class="row">
+            <div class="col">
+                <RadzenButton Text="Reject" Click="() => Reject(id)" ButtonStyle="ButtonStyle.Danger" class="me-1 float-end" />
+            </div>
+        </div>
+        </div>
+    );
+    }
+
+    private async Task Accept(int id)
+    {
+        appointment.IsConfirmed = true;
+        appointment.Id = id;
+        appointment.IsNew = false;
+        var result = await Http.PutAsJsonAsync("api/Appointment", appointment);
+        var response = await result.Content.ReadFromJsonAsync<List<Appointment>>();
+        if (response != null)
+        {
+            appointments = response;
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Appointment Accepted Successfully...!", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task Reject(int id)
+    {
+        if (appointment.RejectReason != "")
+        {
+            appointment.IsConfirmed = false;
+            appointment.Id = id;
+            var result = await Http.PutAsJsonAsync("api/Appointment", appointment);
+            var response = await result.Content.ReadFromJsonAsync<List<Appointment>>();
+            if (response != null)
+            {
+                appointments = response;
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Appointment Rejected Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+                navigationManager.NavigateTo("appoinmentrequests");
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Please enter reason for rejection..", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("appoinmentrequests");
+        }
+    }
+}

@@ -1,0 +1,65 @@
+﻿@page "/addtest"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject IJSRuntime Js
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="10">
+            <RadzenTemplateForm Data="@test" TItem="Tests" Submit="HandleSubmit">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.H4"><b>Add Test</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Test Name</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenTextBox @bind-Value="test.Name" MaxLength="50" Placeholder="Enter Test Name" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Price (Rs.)</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenNumeric @bind-Value="test.Price" Placeholder="Ex. 10.99"  Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="12" Class="text-center">
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Style="width:100px;" class="mt-2">Submit</RadzenButton>
+                    </MudItem>
+                </MudGrid>
+            </RadzenTemplateForm>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    Tests test = new Tests();
+
+    private async Task HandleSubmit()
+    {
+        string price = test.Price.ToString();
+        string[] strings = price.Split(".");
+        string precision = strings[1];
+        if (precision.Length > 2)
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Price precision value should be 2 characters only..", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("addtest");
+        }
+        else
+        {
+            var response = await Http.PostAsJsonAsync("/api/Tests/tests", test);
+            if (response.IsSuccessStatusCode)
+            {
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Test Added Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+                navigationManager.NavigateTo("addtest");
+            }
+        }
+    }
+}

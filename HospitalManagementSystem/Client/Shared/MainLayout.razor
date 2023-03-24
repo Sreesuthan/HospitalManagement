@@ -1,0 +1,149 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager navigationManager
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<RadzenDialog />
+<RadzenNotification />
+<RadzenContextMenu />
+<RadzenTooltip />
+
+<RadzenLayout Style="grid-template-areas: 'rz-sidebar rz-header' 'rz-sidebar rz-body'">
+    <RadzenHeader>
+        <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="Radzen.AlignItems.Center" Gap="0">
+            <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+            <RadzenText TextStyle="TextStyle.H4" class="text-white">Quality Care Hospital</RadzenText>
+            <MudSpacer/>
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+                    <RadzenProfileMenu class="mr-8">
+                        <Template>
+                            <RadzenImage Path="Images/profile.png" class="rz-gravatar" />
+                        </Template>
+                        <ChildContent>
+                            <RadzenProfileMenuItem Text="Profile" Path="" Icon="person"></RadzenProfileMenuItem>
+                            <RadzenProfileMenuItem Text="Update Email" Path="updateemail" Icon="person"></RadzenProfileMenuItem>
+                            <RadzenProfileMenuItem Text="Logout" Path="logout" Icon="logout"></RadzenProfileMenuItem>
+                        </ChildContent>
+                    </RadzenProfileMenu>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Doctor">
+                <Authorized>
+                    <RadzenProfileMenu class="mr-8">
+                        <Template>
+                            <RadzenImage Path="Images/profile.png" class="rz-gravatar" />
+                        </Template>
+                        <ChildContent>
+                            <RadzenProfileMenuItem Text="Profile" Path="" Icon="person"></RadzenProfileMenuItem>
+                            <RadzenProfileMenuItem Text="Logout" Path="logout" Icon="logout"></RadzenProfileMenuItem>
+                        </ChildContent>
+                    </RadzenProfileMenu>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Patient">
+                <Authorized>
+                    <RadzenProfileMenu class="mr-8">
+                        <Template>
+                            <RadzenImage Path="Images/profile.png" class="rz-gravatar" />
+                        </Template>
+                        <ChildContent>
+                            <RadzenProfileMenuItem Text="Profile" Path="" Icon="person"></RadzenProfileMenuItem>
+                            <RadzenProfileMenuItem Text="Logout" Path="logout" Icon="logout"></RadzenProfileMenuItem>
+                        </ChildContent>
+                    </RadzenProfileMenu>
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView>
+                <NotAuthorized>
+                    <RadzenButton Size="ButtonSize.Medium" Click="()=>Login()" Variant="Radzen.Variant.Outlined" ButtonStyle="ButtonStyle.Light" class="mr-8 text-white" Icon="login" Style="width:100px;">Login</RadzenButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </RadzenStack>
+    </RadzenHeader>
+    <RadzenSidebar MouseEnter="ShowSidebar" MouseLeave="CloseSidebar" @bind-Expanded="@sidebarExpanded">
+        <RadzenPanelMenu>
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="Home" Icon="home" Path="/" />
+                    <RadzenPanelMenuItem Text="New Doctor" Icon="person_add" Path="doctorsignup" />
+                    <RadzenPanelMenuItem Text="View Doctors" Path="doctorlist" Icon="manage_search" />
+                    <RadzenPanelMenuItem Text="View Patients" Path="patientlist" Icon="troubleshoot" />
+                    <RadzenPanelMenuItem Text="View Success Orders" Path="successorderslist" Icon="manage_search" />
+                    <RadzenPanelMenuItem Text="Pharmacy" Icon="local_pharmacy">
+                        <RadzenPanelMenuItem Text="Medicine Listings" Path="medicinelist" Icon="format_list_bulleted_add"></RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="Add Medicine" Path="addmedicine" Icon="medication"></RadzenPanelMenuItem>
+                    </RadzenPanelMenuItem>
+                    <RadzenPanelMenuItem Text="Tests" Icon="local_pharmacy">
+                        <RadzenPanelMenuItem Text="Test Listings" Path="testlist" Icon="format_list_bulleted_add"></RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="Add Test" Path="addtest" Icon="medication"></RadzenPanelMenuItem>
+                    </RadzenPanelMenuItem>
+                    <RadzenPanelMenuItem Text="Update GST" Path="adjustgst" Icon="work_off" />
+                    <RadzenPanelMenuItem Text="View Leave Requests" Path="leavereqlist" Icon="work_off" />
+                    <RadzenPanelMenuItem Text="View Comments" Icon="pageview" />
+                    <RadzenPanelMenuItem Text="Inbox" Icon="inbox" />
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Doctor">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="Home" Icon="home" Path="/" />
+                    <RadzenPanelMenuItem Text="Schedule" Icon="schedule">
+                        <RadzenPanelMenuItem Text="Create Appointment" Icon="more_time"></RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="Appoinment Requests" Path="appoinmentrequests" Icon="call_received"></RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="View Appoinments"Path="appoinments" Icon="wysiwyg"></RadzenPanelMenuItem>
+                    </RadzenPanelMenuItem>
+                    <RadzenPanelMenuItem Text="Lab Report" Icon="article">
+                        <RadzenPanelMenuItem Text="Create Report" Icon="edit_document"></RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="View Report" Icon="wysiwyg"></RadzenPanelMenuItem>
+                    </RadzenPanelMenuItem>
+                    <RadzenPanelMenuItem Text="Request Leave" Path="requestleave" Icon="work_off" />
+                    <RadzenPanelMenuItem Text="Inbox" Icon="inbox" />
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView Roles="Patient">
+                <Authorized>
+                    <RadzenPanelMenuItem Text="Home" Icon="home" Path="/" />
+                    <RadzenPanelMenuItem Text="Find Doctor" Path="finddoctor" Icon="search" />
+                    <RadzenPanelMenuItem Text="Appoinment Requests" Path="requestlist" Icon="call_received"></RadzenPanelMenuItem>
+                    <RadzenPanelMenuItem Text="Pay Bill" Path="billpay" Icon="payments"></RadzenPanelMenuItem>
+                    <RadzenPanelMenuItem Text="Visited History" Path="patienthistories" Icon="history" />
+                    <RadzenPanelMenuItem Text="Feedback" Icon="feedback" />
+                    <RadzenPanelMenuItem Text="About" Icon="info" />
+                </Authorized>
+            </AuthorizeView>
+            <AuthorizeView>
+                <NotAuthorized>
+                    <RadzenPanelMenuItem Text="Home" Icon="home" Path="/" />
+                    <RadzenPanelMenuItem Text="Patient Registration" Path="registration" Icon="person_add" />
+                    <RadzenPanelMenuItem Text="Feedback" Icon="feedback" />
+                    <RadzenPanelMenuItem Text="About" Icon="info" />
+                </NotAuthorized>
+            </AuthorizeView>
+        </RadzenPanelMenu>
+    </RadzenSidebar>
+    <RadzenBody>
+        <div class="rz-p-4">
+            @Body
+        </div>
+    </RadzenBody>
+</RadzenLayout>
+
+@code {
+    bool sidebarExpanded = true;
+
+    void ShowSidebar()
+    {
+        sidebarExpanded = true;
+    }
+
+    void CloseSidebar()
+    {
+        sidebarExpanded = false;
+    }
+
+    private void Login()
+    {
+        navigationManager.NavigateTo("login");
+    }
+}

@@ -1,0 +1,74 @@
+﻿@page "/adjustgst"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject IJSRuntime Js
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="10">
+            <RadzenTemplateForm Data="@gst" TItem="GST" Submit="HandleSubmit">
+                <MudGrid Justify="Justify.Center" Class="mt-2">
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.H4"><b>Update GST</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.H6"><b>Current GST :</b> @gst.Value%</RadzenText>
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>GST (%)</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenNumeric @bind-Value="gst.Value" Placeholder="Ex. 18"  Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="12" Class="text-center">
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Style="width:100px;" class="mt-2">Update</RadzenButton>
+                    </MudItem>
+                </MudGrid>
+            </RadzenTemplateForm>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    GST gst = new GST();
+    private int InitialGst { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<GST>>($"api/GST");
+        if (result != null)
+        {
+            var result1 = result.FirstOrDefault();
+            if (result1 != null)
+            {
+                gst = result1;
+                InitialGst = gst.Value;
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (gst.Value != InitialGst)
+        {
+            gst.ChangedFrom = DateTime.Now;
+            var response = await Http.PostAsJsonAsync("api/GST", gst);
+            if (response.IsSuccessStatusCode)
+            {
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "GST Updated Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+                navigationManager.NavigateTo("/");
+            }
+        }
+        else
+        { 
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Please change gst value...!", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("adjustgst");
+        }
+    }
+}

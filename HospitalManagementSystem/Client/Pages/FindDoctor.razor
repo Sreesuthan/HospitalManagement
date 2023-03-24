@@ -1,0 +1,231 @@
+﻿@page "/finddoctor"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+	    <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">Search Doctor</RadzenText>
+            </MudItem>
+            <MudItem xs="8">
+                <RadzenDropDown @bind-Value="Disease" Style="width:100%;" Placeholder="Select Category" Data="diseases" AllowFiltering="true" TextProperty="Disease" ValueProperty="Disease" />
+            </MudItem>
+            <MudItem xs="4">
+                <RadzenButton Size="ButtonSize.Medium" Click="()=>GetDetails(Disease)" Variant="Radzen.Variant.Filled" ButtonStyle="ButtonStyle.Primary" Icon="search" >Search Doctor</RadzenButton>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                if(doctors.Count != 0)
+                    {
+                        <RadzenText TextStyle="TextStyle.Body1" class="mt-4 mb-2">Consultation Fee : <b>Rs. @ConsultationFee</b></RadzenText>
+                    <RadzenDataGrid Data="@doctors" TItem="ApplicationUser">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="FirstName" Title="Name" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="Specialist" Title="Specialist In" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="Experience" Title="Experience" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="ConsultingTime" Title="Consulting Time" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="PhoneNo" Title="Mobile No." />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="Email" Title="Email" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Title="Request Appointment">
+                                <Template Context="doctors">
+                                    <RadzenButton Click="() => RequestAppointment(doctors.Id)" Icon="outgoing_mail" ButtonStyle="ButtonStyle.Primary" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Doctors Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<Diseases> diseases = new List<Diseases>
+    {
+        new Diseases{Id=1, Disease= "Pediatrician"},
+        new Diseases{Id=2, Disease= "Gynecologists"},
+        new Diseases{Id=3, Disease= "Child Psychologist/Psychiatrist"},
+        new Diseases{Id=4, Disease= "Dermatologist"},
+        new Diseases{Id=5, Disease= "Cardiologist"},
+        new Diseases{Id=6, Disease= "ENT Specialist"},
+        new Diseases{Id=7, Disease= "Neurologist"},
+        new Diseases{Id=8, Disease= "Therapist"},
+        new Diseases{Id=9, Disease= "Psychologist"},
+        new Diseases{Id=10, Disease= "Audiologist"},
+        new Diseases{Id=11, Disease= "Dentist "},
+        new Diseases{Id=12, Disease= "Allergist"},
+        new Diseases{Id=13, Disease= "Endocrinologist"}
+    };
+    List<ApplicationUser> doctors = new List<ApplicationUser>();
+    List<Appointment> appointments = new List<Appointment>();
+
+    public string Disease { get; set; } = string.Empty;
+    public string Patient { get; set; } = string.Empty;
+    public Decimal ConsultationFee { get; set; }
+
+    private async Task GetDetails(string disease)
+    {
+        if (disease != "")
+        {
+            var userDetails = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+            if (userDetails != null && userDetails.IsAuthenticated)
+            {
+                Patient = userDetails.Name;
+                var result2 = await Http.GetFromJsonAsync<List<Appointment>>($"api/Appointment/appointments");
+                if (result2 != null)
+                {
+                    appointments = result2.Where(r => r.PatientUserName.Equals(Patient)).ToList();
+                    if (appointments == null)
+                    {
+                        if (Disease == "Pediatrician")
+                        {
+                            ConsultationFee = 700.00m;
+                        }
+                        else if (Disease == "Gynecologists")
+                        {
+                            ConsultationFee = 600.00m;
+                        }
+                        else if (Disease == "Child Psychologist/Psychiatrist")
+                        {
+                            ConsultationFee = 800.00m;
+                        }
+                        else if (Disease == "Dermatologist")
+                        {
+                            ConsultationFee = 900.00m;
+                        }
+                        else if (Disease == "Cardiologist")
+                        {
+                            ConsultationFee = 1000.00m;
+                        }
+                        else if (Disease == "ENT Specialist")
+                        {
+                            ConsultationFee = 650.00m;
+                        }
+                        else if (Disease == "Neurologist")
+                        {
+                            ConsultationFee = 750.00m;
+                        }
+                        else if (Disease == "Therapist")
+                        {
+                            ConsultationFee = 850.00m;
+                        }
+                        else if (Disease == "Psychologist")
+                        {
+                            ConsultationFee = 950.00m;
+                        }
+                        else if (Disease == "Audiologist")
+                        {
+                            ConsultationFee = 500.00m;
+                        }
+                        else if (Disease == "Dentist")
+                        {
+                            ConsultationFee = 550.00m;
+                        }
+                        else if (Disease == "Allergist")
+                        {
+                            ConsultationFee = 400.00m;
+                        }
+                        else
+                        {
+                            ConsultationFee = 450.00m;
+                        }
+                    }
+                    else
+                    {
+
+                        if (Disease == "Pediatrician")
+                        {
+                            ConsultationFee = 500.00m;
+                        }
+                        else if (Disease == "Gynecologists")
+                        {
+                            ConsultationFee = 400.00m;
+                        }
+                        else if (Disease == "Child Psychologist/Psychiatrist")
+                        {
+                            ConsultationFee = 600.00m;
+                        }
+                        else if (Disease == "Dermatologist")
+                        {
+                            ConsultationFee = 700.00m;
+                        }
+                        else if (Disease == "Cardiologist")
+                        {
+                            ConsultationFee = 800.00m;
+                        }
+                        else if (Disease == "ENT Specialist")
+                        {
+                            ConsultationFee = 450.00m;
+                        }
+                        else if (Disease == "Neurologist")
+                        {
+                            ConsultationFee = 550.00m;
+                        }
+                        else if (Disease == "Therapist")
+                        {
+                            ConsultationFee = 650.00m;
+                        }
+                        else if (Disease == "Psychologist")
+                        {
+                            ConsultationFee = 750.00m;
+                        }
+                        else if (Disease == "Audiologist")
+                        {
+                            ConsultationFee = 300.00m;
+                        }
+                        else if (Disease == "Dentist")
+                        {
+                            ConsultationFee = 350.00m;
+                        }
+                        else if (Disease == "Allergist")
+                        {
+                            ConsultationFee = 200.00m;
+                        }
+                        else
+                        {
+                            ConsultationFee = 250.00m;
+                        }
+                    }
+                }
+                else
+                {
+                    navigationManager.NavigateTo("login");
+                    NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "You need to login first.", Duration = 10000 };
+                    notificationService.Notify(message);
+                }
+                var result = await Http.GetFromJsonAsync<List<ApplicationUser>>("api/User/doctors");
+                if (result != null)
+                {
+                    doctors = result.Where(d => d.Specialist.Contains(disease)).ToList();
+                }
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Please Select Category...",
+                Duration = 10000
+            };
+            notificationService.Notify(message);
+        }
+    }
+
+    private void RequestAppointment(int id)
+    {
+        navigationManager.NavigateTo($"requestappointment/{id}/{Patient}");
+    }
+}

@@ -1,0 +1,342 @@
+﻿@page "/viewbill/{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject IJSRuntime JS
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="10">
+            <MudGrid Class="mb-4">
+                @{
+                    if (prescripedMedicines.Count !=0)
+                    {
+                        <MudItem xs="12">
+                            <RadzenText TextStyle="TextStyle.H4" class="mt-2"><b>Medicine Bill</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="2">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>Consultation Fee</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="1" Class="text-center">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="9">
+                            <RadzenText TextStyle="TextStyle.Body2">Rs. @ConsultationFee</RadzenText>
+                        </MudItem>
+                        <MudItem xs="2">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>Tests Bill</b></RadzenText>
+                        </MudItem>
+                        if (suggestedTests.Count != 0)
+                        {
+                            foreach (var test in suggestedTests)
+                            {
+                                TestsBill = TestsBill + test.Price;
+                            }
+                        }
+                        <MudItem xs="1" Class="text-center">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="9">
+                            <RadzenText TextStyle="TextStyle.Body2">Rs. @TestsBill</RadzenText>
+                        </MudItem>
+                        <MudItem xs="2">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>Medicine Bill</b></RadzenText>
+                        </MudItem>
+                        if (prescripedMedicines.Count != 0)
+                        {
+                            foreach (var medicine in prescripedMedicines)
+                            {
+                                MedicineBill = MedicineBill + (medicine.Price * medicine.Quantity);
+                            }
+                        }
+                        <MudItem xs="1" Class="text-center">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="9">
+                            <RadzenText TextStyle="TextStyle.Body2">Rs. @MedicineBill</RadzenText>
+                        </MudItem>
+                        <MudItem xs="2">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>GST (@gst.Value%)</b></RadzenText>
+                        </MudItem>
+                        if (MedicineBill != 0 && ConsultationFee != 0 && gst != null)
+                        {
+                            GST = ((MedicineBill + ConsultationFee + TestsBill) * gst.Value) / 100;
+                            GST = decimal.Round(GST, 2, MidpointRounding.AwayFromZero);
+                        }
+                        <MudItem xs="1" Class="text-center">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="9">
+                            <RadzenText TextStyle="TextStyle.Body2">Rs. @GST</RadzenText>
+                        </MudItem>
+                        <MudItem xs="2">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>Total Bill</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="1" Class="text-center">
+                            <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                        </MudItem>
+                        if (MedicineBill != 0 && ConsultationFee != 0 && GST != 0)
+                        {
+                            TotalBill = MedicineBill + ConsultationFee + TestsBill + GST;
+                            TotalBill = decimal.Round(TotalBill, 2, MidpointRounding.AwayFromZero);
+                        }
+                        <MudItem xs="6">
+                            <RadzenText TextStyle="TextStyle.Body2">Rs. @TotalBill</RadzenText>
+                        </MudItem>
+                        if(patient.IsPaymentCompleted)
+                        {
+                            <MudItem xs="3" Class="text-center">
+                                <RadzenButton Click="()=>DownloadBill()" Icon="save" class="mt-2">Download Bill</RadzenButton>
+                            </MudItem>
+                        }
+                        else
+                        {
+                            <MudItem xs="3" Class="text-center">
+                                <RadzenButton Click="()=>Submit()" Icon="save" Style="width:100px;" class="mt-2">Pay Bill</RadzenButton>
+                            </MudItem>
+                        }
+                        <MudItem xs="12">
+                            <RadzenText TextStyle="TextStyle.H5" class="mt-2"><b>Prescriped Medicines</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <RadzenDataGrid Data="@prescripedMedicines" TItem="PrescripedMedicine">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Name" Title="Medicine Name" />
+                                    <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Quantity" Title="Quantity" />
+                                    <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Price" Title="Rate" />
+                                    <RadzenDataGridColumn TItem="PrescripedMedicine" Title="Amount">
+                                        <Template Context="medicines">@(medicines.Price * medicines.Quantity)</Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <RadzenText TextStyle="TextStyle.H5" class="mt-2"><b>Suggested Tests</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <RadzenDataGrid Data="@suggestedTests" TItem="SuggestedTests">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="SuggestedTests" Property="Name" Title="Medicine Name" />
+                                    <RadzenDataGridColumn TItem="SuggestedTests" Property="Price" Title="Amount" />
+                                </Columns>
+                            </RadzenDataGrid>
+                        </MudItem>
+                    }
+                }
+            </MudGrid>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    PatientHistory patient = new PatientHistory();
+    GST gst = new GST();
+    List<PrescripedMedicine> prescripedMedicines = new List<PrescripedMedicine>();
+    List<Appointment> appointments = new List<Appointment>();
+    Appointment appointment = new Appointment();
+    List<SuggestedTests> suggestedTests = new List<SuggestedTests>();
+    List<SuccessOrders> successOrders = new List<SuccessOrders>();
+    public Decimal MedicineBill { get; set; }
+    public Decimal ConsultationFee { get; set; }
+    public Decimal TestsBill { get; set; }
+    public Decimal GST { get; set; }
+    public Decimal TotalBill { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<PatientHistory>($"api/PatientHistory/patienthistory/{Id}");
+        if (result != null)
+        {
+            patient = result;
+        }
+
+        var result1 = await Http.GetFromJsonAsync<List<PrescripedMedicine>>($"api/PatientHistory/prescripedmedicines");
+        if (result1 != null)
+        {
+            prescripedMedicines = result1.Where(r => r.PatientUserName.Equals(patient.PatientUserName) && r.ConsultingTime.Equals(patient.ConsultingTime) && r.Date.Equals(patient.Date)).ToList();
+        }
+
+        var result4 = await Http.GetFromJsonAsync<List<SuggestedTests>>($"api/Tests/suggestedtests");
+        if (result4 != null)
+        {
+            suggestedTests = result4.Where(r => r.PatientUserName.Equals(patient.PatientUserName) && r.ConsultingTime.Equals(patient.ConsultingTime) && r.Date.Equals(patient.Date)).ToList();
+        }
+
+        var result2 = await Http.GetFromJsonAsync<List<Appointment>>($"api/Appointment/doctordetails");
+        if (result2 != null)
+        {
+            var appointmentresult = result2.FirstOrDefault(r => r.PatientUserName.Equals(patient.PatientUserName) && r.ConsultingTime.Equals(patient.ConsultingTime) && r.Date.Equals(patient.Date));
+            if (appointmentresult != null)
+            {
+                appointment = appointmentresult;
+                if (appointment.IsNew)
+                {
+                    if (appointment.Specialist == "Pediatrician")
+                    {
+                        ConsultationFee = 700.00m;
+                    }
+                    else if (appointment.Specialist == "Gynecologists")
+                    {
+                        ConsultationFee = 600.00m;
+                    }
+                    else if (appointment.Specialist == "Child Psychologist/Psychiatrist")
+                    {
+                        ConsultationFee = 800.00m;
+                    }
+                    else if (appointment.Specialist == "Dermatologist")
+                    {
+                        ConsultationFee = 900.00m;
+                    }
+                    else if (appointment.Specialist == "Cardiologist")
+                    {
+                        ConsultationFee = 1000.00m;
+                    }
+                    else if (appointment.Specialist == "ENT Specialist")
+                    {
+                        ConsultationFee = 650.00m;
+                    }
+                    else if (appointment.Specialist == "Neurologist")
+                    {
+                        ConsultationFee = 750.00m;
+                    }
+                    else if (appointment.Specialist == "Therapist")
+                    {
+                        ConsultationFee = 850.00m;
+                    }
+                    else if (appointment.Specialist == "Psychologist")
+                    {
+                        ConsultationFee = 950.00m;
+                    }
+                    else if (appointment.Specialist == "Audiologist")
+                    {
+                        ConsultationFee = 500.00m;
+                    }
+                    else if (appointment.Specialist == "Dentist")
+                    {
+                        ConsultationFee = 550.00m;
+                    }
+                    else if (appointment.Specialist == "Allergist")
+                    {
+                        ConsultationFee = 400.00m;
+                    }
+                    else
+                    {
+                        ConsultationFee = 450.00m;
+                    }
+                }
+                else
+                {
+
+                    if (appointment.Specialist == "Pediatrician")
+                    {
+                        ConsultationFee = 500.00m;
+                    }
+                    else if (appointment.Specialist == "Gynecologists")
+                    {
+                        ConsultationFee = 400.00m;
+                    }
+                    else if (appointment.Specialist == "Child Psychologist/Psychiatrist")
+                    {
+                        ConsultationFee = 600.00m;
+                    }
+                    else if (appointment.Specialist == "Dermatologist")
+                    {
+                        ConsultationFee = 700.00m;
+                    }
+                    else if (appointment.Specialist == "Cardiologist")
+                    {
+                        ConsultationFee = 800.00m;
+                    }
+                    else if (appointment.Specialist == "ENT Specialist")
+                    {
+                        ConsultationFee = 450.00m;
+                    }
+                    else if (appointment.Specialist == "Neurologist")
+                    {
+                        ConsultationFee = 550.00m;
+                    }
+                    else if (appointment.Specialist == "Therapist")
+                    {
+                        ConsultationFee = 650.00m;
+                    }
+                    else if (appointment.Specialist == "Psychologist")
+                    {
+                        ConsultationFee = 750.00m;
+                    }
+                    else if (appointment.Specialist == "Audiologist")
+                    {
+                        ConsultationFee = 300.00m;
+                    }
+                    else if (appointment.Specialist == "Dentist")
+                    {
+                        ConsultationFee = 350.00m;
+                    }
+                    else if (appointment.Specialist == "Allergist")
+                    {
+                        ConsultationFee = 200.00m;
+                    }
+                    else
+                    {
+                        ConsultationFee = 250.00m;
+                    }
+                }
+            }
+        }
+
+        var result8 = await Http.GetFromJsonAsync<List<SuccessOrders>>($"api/SuccessOrder/invoice");
+        if (result8 != null)
+        {
+            successOrders = result8.Where(r => r.AppointmentId.Equals(appointment.Id)).ToList();
+        }
+
+        var result3 = await Http.GetFromJsonAsync<List<GST>>($"api/GST");
+        if (result3 != null)
+        {
+            var result5 = result3.FirstOrDefault();
+            if (result5 != null)
+            {
+                gst = result5;
+            }
+        }
+    }
+
+    private async Task Submit()
+    {
+        foreach (var test in suggestedTests)
+        {
+            PrescripedMedicine prescripedMedicine1 = new PrescripedMedicine { Name = test.Name, Price = test.Price, Quantity = test.Quantity };
+            prescripedMedicines.Add(prescripedMedicine1);
+        }
+        PrescripedMedicine prescripedMedicine2 = new PrescripedMedicine { Name = "Consulting Fee", Price = ConsultationFee, Quantity = 1 };
+        prescripedMedicines.Add(prescripedMedicine2);
+        PrescripedMedicine prescripedMedicine3 = new PrescripedMedicine { Name = "GST", Price = decimal.Round(GST, 2, MidpointRounding.AwayFromZero), Quantity = 1 };
+        prescripedMedicines.Add(prescripedMedicine3);
+
+        var response = await Http.PostAsJsonAsync($"/api/Payment/checkout/{Id}", prescripedMedicines);
+        var url = await response.Content.ReadAsStringAsync();
+        navigationManager.NavigateTo(url);
+    }
+
+    private async Task DownloadBill()
+    {
+        var response = await Http.PostAsJsonAsync($"/api/Bill", successOrders);
+        if (!response.IsSuccessStatusCode)
+        {
+            await JS.InvokeVoidAsync("alert", "Error in bill generation. Please try again.");
+        }
+        else
+        {
+            var successOrder = successOrders.FirstOrDefault();
+            var fileStream = response.Content.ReadAsStream();
+            using var streamRef = new DotNetStreamReference(stream: fileStream);
+            await JS.InvokeVoidAsync("downloadFileFromStream", $"INV00{successOrder.InvoiceId}_Receipt.pdf", streamRef);
+        }
+    }
+}

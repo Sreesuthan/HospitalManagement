@@ -1,0 +1,227 @@
+﻿@page "/addmedicine"
+@using Microsoft.AspNetCore.Authorization
+@using System.Net.Http.Headers;
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject IJSRuntime Js
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="10">
+            <RadzenTemplateForm Data="@medicine" TItem="Medicines" Submit="HandleSubmit">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="3">
+                        <RadzenText TextStyle="TextStyle.H4"><b>Add Medicine</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="9">
+                        <RadzenButton Click="() => ExportToExcel()" Icon="download" Text="Download Excel Template" class="ml-2 mt-2" Style="float:right; text-transform: none;" ButtonStyle="ButtonStyle.Secondary" />
+                        <InputFile id="fileInput" OnChange="OnFileChange" hidden />
+                        <MudButton HtmlTag="label" Variant="MudBlazor.Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload" for="fileInput" Style="float:right; text-transform: none;" Class="mt-2">Import from Excel</MudButton>
+                    </MudItem>
+                    @{
+                        if (Error.Length > 0)
+                        {
+                            <MudItem xs="12">
+                                <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.Small" Variant="Radzen.Variant.Flat" Shade="Shade.Lighter">@Error</RadzenAlert>
+                            </MudItem>
+                        }
+                    }
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Medicine Name</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="10">
+                        <RadzenTextBox @bind-Value="medicine.Name" MaxLength="50" Placeholder="Enter Medicine Name" Style="width:75%;" />
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Mfg. Date</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenDatePicker @bind-Value="medicine.MfgDate" DateFormat="dd-MMM-yyyy" Max="DateTime.Today" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Exp. Date</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenDatePicker @bind-Value="medicine.ExpDate" DateFormat="dd-MMM-yyyy" Min="DateTime.Today" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Price (Rs.)</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenNumeric @bind-Value="medicine.Price" Placeholder="Ex. 10.99"  Style="width:100%;" />
+                    </MudItem>
+                            <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Medicines Count</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenNumeric @bind-Value="medicine.AvailableMedicinesCount" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="12" Class="text-center">
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Style="width:100px;" class="mt-2">Submit</RadzenButton>
+                    </MudItem>
+                </MudGrid>
+            </RadzenTemplateForm>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+@code {
+    Medicines medicine = new Medicines();
+    List<Medicines> medicines = new List<Medicines>();
+    List<Medicines> medicinesFromExcel = new List<Medicines>();
+    List<Export_Medicines> export_Medicines = new List<Export_Medicines>();
+    public string Error { get; set; } = string.Empty;
+    public int InsertCount { get; set; }
+    public int UpdateCount { get; set; }
+    public int CancelCount { get; set; }
+
+    private async Task HandleSubmit()
+    {
+        Error = "";
+        string price = medicine.Price.ToString();
+        string[] strings = price.Split(".");
+        string precision = strings[1];
+        if (precision.Length > 2)
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Price precision value should be 2 characters only..", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("addmedicine");
+        }
+        else
+        {
+            var response = await Http.PostAsJsonAsync("/api/Medicines", medicine);
+            if (response.IsSuccessStatusCode)
+            {
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Medicine Added Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+                navigationManager.NavigateTo("addmedicine");
+            }
+        }
+    }
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        Error = "";
+        InsertCount = 0;
+        UpdateCount = 0;
+        CancelCount = 0;
+
+        if (IsValidExtensionDoc(e.File))
+        {
+            using var content = new MultipartFormDataContent();
+            foreach (var file in e.GetMultipleFiles(int.MaxValue))
+            {
+                var fileContent = new StreamContent(file.OpenReadStream(long.MaxValue));
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                content.Add(content: fileContent, name: "\"files\"", fileName: file.Name);
+            }
+
+            var response = await Http.PostAsync("/api/Medicines/importfromexcel", content);
+            if(response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<List<Medicines>>();
+                if (result != null)
+                {
+                    medicinesFromExcel = result;
+                }
+
+                var result1 = await Http.GetFromJsonAsync<List<Medicines>>($"api/Medicines/medicines");
+                if (result1 != null)
+                {
+                    medicines = result1;
+                }
+
+                foreach (var medicineFromExcel in medicinesFromExcel)
+                {
+                    if (medicines.Any(m => m.Name.Equals(medicineFromExcel.Name)))
+                    {
+                        var med = medicines.FirstOrDefault(m => m.Name.Equals(medicineFromExcel.Name));
+                        if (med != null)
+                        {
+                            medicineFromExcel.AvailableMedicinesCount = medicineFromExcel.AvailableMedicinesCount + med.AvailableMedicinesCount;
+                        }
+
+                        var response1 = await Http.PutAsJsonAsync("api/Medicines/name", medicineFromExcel);
+                        if (response1.IsSuccessStatusCode)
+                        {
+                            UpdateCount = UpdateCount + 1;
+                        }
+                        else
+                        {
+                            CancelCount = CancelCount + 1;
+                        }
+                    }
+                    else
+                    {
+                        var response2 = await Http.PostAsJsonAsync("/api/Medicines", medicineFromExcel);
+                        if (response2.IsSuccessStatusCode)
+                        {
+                            InsertCount = InsertCount + 1;
+                        }
+                        else
+                        {
+                            CancelCount = CancelCount + 1;
+                        }
+                    }
+                }
+
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"Medicines Saved Successfully...! {(InsertCount > 0 ? $"{(InsertCount == 1 ? $" {InsertCount} medicine added." : $" {InsertCount} medicines added.")}" : "")} {(UpdateCount > 0 ? $"{(UpdateCount == 1 ? $"{UpdateCount} medicine updated." : $"{UpdateCount} medicines updated.")} " : "")} {(CancelCount > 0 ? $"{(CancelCount == 1 ? $" and {CancelCount} medicine canceled." : $" and {CancelCount} medicines canceled.")}" : "")}", Duration = 10000 };
+                notificationService.Notify(message);
+                navigationManager.NavigateTo("addmedicine");
+            }
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                if (error != null)
+                {
+                    Error = error;
+                }
+                navigationManager.NavigateTo("addmedicine");
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Please select excel file only...", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("addmedicine");
+        }
+    }
+
+    private bool IsValidExtensionDoc(IBrowserFile file)
+    {
+        string fileExtension = ".xlsx";
+        if (file.Name.Contains(fileExtension))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        var result = await Http.GetFromJsonAsync<List<Export_Medicines>>($"api/Medicines/template");
+        if (result != null)
+        {
+            export_Medicines = result;
+        }
+
+        var response = await Http.PostAsJsonAsync($"/api/Medicines/exporttoexcel", export_Medicines);
+        if (!response.IsSuccessStatusCode)
+        {
+            await Js.InvokeVoidAsync("alert", "Error in export to excel file. Please try again.");
+        }
+        else
+        {
+            var fileStream = response.Content.ReadAsStream();
+            using var streamRef = new DotNetStreamReference(stream: fileStream);
+            await Js.InvokeVoidAsync("downloadFileFromStream", $"Medicines_{DateTime.Now.ToString("ddMMyyyy")}.xlsx", streamRef);
+        }
+    }
+}

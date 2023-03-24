@@ -1,0 +1,103 @@
+﻿@page "/patientlist"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject IJSRuntime Js
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+	    <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">View Patients</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                    if (patients.Count != 0)
+                {
+                        <RadzenDataGrid Data="@patients" TItem="ApplicationUser">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="FirstName" Title="Name" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="Gender" Title="Gender" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="Age" Title="Age" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="PhoneNo" Title="Mobile No." />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="Email" Title="Email" />
+                                <RadzenDataGridColumn TItem="ApplicationUser" Title="Action">
+                                    <Template Context="patients">
+                                        <RadzenButton Click="() => BlockUser(patients.Id, patients.IsBlocked)" ButtonStyle="ButtonStyle.Primary">@(patients.IsBlocked ? "UnBlock" : "Block")</RadzenButton>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Patients Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<ApplicationUser> patients = new List<ApplicationUser>();
+    ApplicationUser patient = new ApplicationUser();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<ApplicationUser>>("api/User");
+        if (result != null)
+        {
+            patients = result.Where(r => r.Role.Equals("Patient")).ToList();
+        }
+    }
+
+    private async Task BlockUser(int id, bool isBlocked)
+    {
+        if (isBlocked)
+        {
+            if (!await Js.InvokeAsync<bool>("confirm", "Are you want to unblock this patient?"))
+            {
+                return;
+            }
+            else
+            {
+                patient.IsBlocked = false;
+                patient.Id = id;
+                var result = await Http.PutAsJsonAsync("api/User", patient);
+                var response = await result.Content.ReadFromJsonAsync<List<ApplicationUser>>();
+                if (response != null)
+                {
+                    patients = response.Where(r => r.Role.Equals("Patient")).ToList();
+                    NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Patient Unblocked Successfully...!", Duration = 10000 };
+                    notificationService.Notify(message);
+                }
+            }
+        }
+        else
+        {
+            if (!await Js.InvokeAsync<bool>("confirm", "Are you want to block this patient?"))
+            {
+                return;
+            }
+            else
+            {
+                patient.IsBlocked = true;
+                patient.Id = id;
+                var result = await Http.PutAsJsonAsync("api/User", patient);
+                var response = await result.Content.ReadFromJsonAsync<List<ApplicationUser>>();
+                if (response != null)
+                {
+                    patients = response.Where(r => r.Role.Equals("Patient")).ToList();
+                    NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Patient Blocked Successfully...!", Duration = 10000 };
+                    notificationService.Notify(message);
+                }
+            }
+        }
+    }
+}

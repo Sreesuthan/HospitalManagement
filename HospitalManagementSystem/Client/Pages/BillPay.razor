@@ -1,0 +1,80 @@
+﻿@page "/billpay"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject Radzen.DialogService DialogService
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+        <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">Appoinment Requests</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                    if (patientHistories.Count != 0)
+                {
+                        <RadzenDataGrid Data="@patientHistories" TItem="PatientHistory">
+                        <Columns>
+                                <RadzenDataGridColumn TItem="PatientHistory" Property="FirstName" Title="Patient Name" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Property="Age" Title="Age" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Property="Gender" Title="Gender" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Property="VisitedFor" Title="Visiting For" />
+                            <RadzenDataGridColumn TItem="PatientHistory" Property="ConsultingTime" Title="Consulting Time" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Title="Consulting Date" >
+                                    <Template Context="patientHistories">
+                                        @patientHistories.Date.ToShortDateString()
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="PatientHistory" Title="Status">
+                                    <Template Context="patientHistories">
+                                        @(patientHistories.IsPaymentCompleted ? "Completed" : "Pending")
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="PatientHistory" Title="Action">
+                                    <Template Context="patientHistories">
+                                        <RadzenButton Click="() => ViewBill(patientHistories.Id)" Icon="shopping_cart_checkout" ButtonStyle="ButtonStyle.Primary" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                            <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Bill Payments are Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<PatientHistory> patientHistories = new List<PatientHistory>();
+
+    public string PatientUserName { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userDetails = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+        if (userDetails != null && userDetails.IsAuthenticated)
+        {
+            PatientUserName = userDetails.Name;
+            var result = await Http.GetFromJsonAsync<List<PatientHistory>>("api/PatientHistory/patienthistories");
+            if (result != null)
+            {
+                patientHistories = result.Where(r => r.PatientUserName.Equals(PatientUserName) && r.IsMedicineAdded).ToList();
+            }
+        }
+    }
+
+    void ViewBill(int id)
+    {
+        navigationManager.NavigateTo($"viewbill/{id}");
+    }
+}

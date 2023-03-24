@@ -1,0 +1,138 @@
+﻿@page "/leavereqlist"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject Radzen.DialogService DialogService
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+        <MudGrid Class="mb-4">
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">Leave Requests</RadzenText>
+            </MudItem>
+            <MudItem xs="12">
+            @{
+                if (leaveRequests.Count != 0)
+                {
+                    <RadzenDataGrid Data="@leaveRequests" TItem="LeaveRequest">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="LeaveRequest" Property="DocterUserName" Title="Doctor Username" />
+                            <RadzenDataGridColumn TItem="LeaveRequest" Title="Leave Needs On" >
+                                <Template Context="leaveRequests">
+                                @leaveRequests.Date.ToShortDateString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="LeaveRequest" Property="LeaveReason" Title="Leave Reason" />
+                            <RadzenDataGridColumn TItem="LeaveRequest" Title="Action">
+                                <Template Context="leaveRequests">
+                                    <RadzenButton Click="() => ShowDialog(leaveRequests.DocterUserName)" ButtonStyle="ButtonStyle.Primary">Accept/Reject</RadzenButton>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Leave Requests Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+
+@code {
+    LeaveRequest leaveRequest = new LeaveRequest();
+    List<LeaveRequest> leaveRequests = new List<LeaveRequest>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<LeaveRequest>>("api/LeaveRequest/leaveRequests");
+        if (result != null)
+        {
+            leaveRequests = result;
+        }
+    }
+
+    async Task ShowDialog(string DoctorName)
+    {
+        var result = await DialogService.OpenAsync("Leave Request", ds =>
+    @<div>
+        <p class="mb-4">Are you wanna accept leave request?</p>
+        <div class="row">
+            <div class="col">
+                <RadzenButton Text="Accept" Click="() => Accept(DoctorName)" class="me-1" ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton Text="Reject" Click="() => ShowDialog1(DoctorName, ds)" ButtonStyle="ButtonStyle.Danger" class="me-1" />
+                <RadzenButton Text="Cancel" Click="() => ds.Close(false)" ButtonStyle="ButtonStyle.Light" class="me-1 float-end" />
+            </div>
+        </div>
+        </div>
+    );
+    }
+
+    async Task ShowDialog1(string DoctorName, Radzen.DialogService dialog)
+    {
+        dialog.Close();
+        var result = await DialogService.OpenAsync("Leave Request", ds =>
+    @<div>
+    <MudGrid Class="mb-2">
+        <MudItem xs="12">
+             <RadzenText TextStyle="TextStyle.Body1">Are you wanna reject leave request?</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">Reason</RadzenText>
+            <RadzenTextArea @bind-Value="leaveRequest.RejectReason" Cols="30" Rows="3" Style="width:100%;" />
+        </MudItem>
+    </MudGrid>
+        <div class="row">
+            <div class="col">
+                <RadzenButton Text="Reject" Click="() => Reject(DoctorName)" ButtonStyle="ButtonStyle.Danger" class="me-1 float-end" />
+            </div>
+        </div>
+        </div>
+    );
+    }
+
+    private async Task Accept(string DoctorName)
+    {
+        leaveRequest.IsConfirmed = true;
+        leaveRequest.DocterUserName = DoctorName;
+        var result = await Http.PutAsJsonAsync("api/LeaveRequest", leaveRequest);
+        var response = await result.Content.ReadFromJsonAsync<List<LeaveRequest>>();
+        if (response != null)
+        {
+            leaveRequests = response;
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Leave Request Accepted Successfully...!", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("leavereqlist");
+        }
+    }
+
+    private async Task Reject(string DoctorName)
+    {
+        if (leaveRequest.RejectReason != "")
+        {
+            leaveRequest.IsConfirmed = false;
+            leaveRequest.DocterUserName = DoctorName;
+            var result = await Http.PutAsJsonAsync("api/LeaveRequest", leaveRequest);
+            var response = await result.Content.ReadFromJsonAsync<List<LeaveRequest>>();
+            if (response != null)
+            {
+                leaveRequests = response;
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Leave Request Rejected Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+                navigationManager.NavigateTo("leavereqlist");
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Please enter reason for rejection..", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("leavereqlist");
+        }
+
+    }
+}

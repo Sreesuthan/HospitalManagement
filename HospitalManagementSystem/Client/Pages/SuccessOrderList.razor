@@ -1,0 +1,56 @@
+﻿@page "/successorderslist"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject HttpClient Http
+
+
+<div class="col-lg-10 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+	    <MudGrid>
+            <MudItem xs="12">
+                <RadzenText TextStyle="TextStyle.H4" class="mt-2">View Successful Orders</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mb-4">
+            @{
+                    if (successOrders.Count != 0)
+                {
+                        <RadzenDataGrid Data="@successOrders" TItem="SuccessOrders">
+                        <Columns>
+                                <RadzenDataGridColumn TItem="SuccessOrders" Property="Username" Title="Patient Name" />
+                                <RadzenDataGridColumn TItem="SuccessOrders" Property="ConsultingTime" Title="Consulted Time" />
+                                <RadzenDataGridColumn TItem="SuccessOrders" Property="Date" Title="Consulted Date" >
+                                    <Template Context="successOrders">
+                                        @successOrders.Date.ToShortDateString()
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SuccessOrders" Property="TotalPrice" Title="Bill Amount" />
+                                <RadzenDataGridColumn TItem="SuccessOrders" Property="OrderDate" Title="Bill Date" >
+                                    <Template Context="successOrders">
+                                        @successOrders.OrderDate.ToShortDateString()
+                                    </Template>
+                                </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                        <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Orders Found...</RadzenText>
+                }
+            }
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+@code {
+    List<SuccessOrders> successOrders = new List<SuccessOrders>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<SuccessOrders>>("api/SuccessOrder/successorders");
+        if (result != null)
+        {
+            successOrders = result.Where(r => r.PrescribedMedicinesId == 0 && r.SuggestedTestsId == 0).ToList();
+        }
+    }
+}

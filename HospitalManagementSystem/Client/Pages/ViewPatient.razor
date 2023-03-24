@@ -1,0 +1,734 @@
+﻿@page "/viewpatient/{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject IJSRuntime Js
+@inject Radzen.DialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
+    <MudGrid Justify="Justify.Center">
+        <MudItem xs="10">
+        @{
+            if (!addMedicine)
+            { 
+            <MudGrid Spacing="1">
+                <MudItem xs="12" Class="mt-2">
+                    <RadzenText TextStyle="TextStyle.H4"><b>Patient Report</b></RadzenText>
+                </MudItem>
+                <MudItem xs="8">
+                    <RadzenText TextStyle="TextStyle.H5" class="mt-2" ><b>Patient Information</b></RadzenText>
+                </MudItem>
+                        <MudItem xs="4" Class="text-center">
+                                <RadzenButton Click="()=>ViewPreviousHistories()" Style="text-transform:none;" >View Previous Histories</RadzenButton>
+                        </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Patient Name</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="9">
+                    <RadzenText TextStyle="TextStyle.Body2">@appointment.FirstName @appointment.LastName</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Gender</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@appointment.Gender</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Age</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@appointment.Age</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Mobile No.</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@appointment.PhoneNo</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Email</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@appointment.Email</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Date</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                            <RadzenText TextStyle="TextStyle.Body2">@appointment.Date.ToShortDateString()</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Time</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenText TextStyle="TextStyle.Body2">@appointment.ConsultingTime</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Visit For</b></RadzenText>
+                </MudItem>
+                <MudItem xs="1" Class="text-center">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+                </MudItem>
+                <MudItem xs="9">
+                    <RadzenText TextStyle="TextStyle.Body2">@appointment.VisitingFor</RadzenText>
+                </MudItem>
+            </MudGrid>
+            <hr />
+            <RadzenTemplateForm Data="@patient" TItem="PatientHistory" Submit="HandleSubmit">
+                <MudGrid Class="mt-2">
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.H5"><b>Test Details</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Height (cm)</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenTextBox @bind-Value="patient.Height" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Weight (Kg)</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenTextBox @bind-Value="patient.Weight" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                            <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Temparature (F)</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenTextBox @bind-Value="patient.TemperatureF" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                            <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Blood Preasure</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenTextBox @bind-Value="patient.BPLevel" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-6">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Blood Sugar Level</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenTextBox @bind-Value="patient.SugarBeforeFood" Placeholder="Before Food" MaxLength="50" Style="width:100%;" />
+                        <RadzenTextBox @bind-Value="patient.SugarAfterFood" Placeholder="After Food" class="mt-1" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="6">
+                    </MudItem>
+                                <MudItem xs="6">
+                                    <RadzenCheckBox @bind-Value="SuggestTest" Name="CheckBox" class="mb-2"/>
+                                    <RadzenLabel Text="Suggest Tests" Component="CheckBox" class="ml-2 mb-2" Style="font-weight:bold; font-size: 16px;"></RadzenLabel>
+                                    <br/>
+                        @if(SuggestTest)
+                        {
+                                <RadzenDropDown @bind-Value="SuggestedTests" Data=@tests TextProperty="Name" ValueProperty="Name" Multiple=true AllowClear=true Placeholder="Select Tests" Chips=true/>
+                                <RadzenButton Click="() => AddTest()" ButtonStyle="ButtonStyle.Primary" class="ml-2">Add</RadzenButton>
+                                }
+                            </MudItem>
+                            <MudItem xs="6">
+                                @{
+                                    if (SuggestTest)
+                                    {
+                                        if (suggestedTests != null)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body1"><b>Suggested Tests</b></RadzenText>
+                                            <RadzenDataGrid Data="@suggestedTests" TItem="SuggestedTests">
+                                                <Columns>
+                                            <RadzenDataGridColumn TItem="SuggestedTests" Property="Name" Title="Test Name" />
+                                            <RadzenDataGridColumn TItem="SuggestedTests" Title="Delete">
+                                                <Template Context="suggestedTests">
+                                                    <RadzenButton Click="() => DeleteTest(suggestedTests.Id)" Icon="delete" ButtonStyle="ButtonStyle.Danger" />
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                        </Columns>
+                                    </RadzenDataGrid>
+                                    }
+                                    }
+                                    }
+                            </MudItem>
+                    <MudItem xs="2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Comments</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="10">
+                                <RadzenTextArea @bind-Value="patient.Comments" Cols="30" Rows="4" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="12" Class="text-center">
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Style="width:100px;" class="mt-2">Next</RadzenButton>
+                    </MudItem>
+                </MudGrid>
+            </RadzenTemplateForm>
+            }
+            else
+            {
+                <MudGrid Class="mb-4">
+                    @{
+                        if (prescripedMedicines.Count !=0)
+                        {
+                            <MudItem xs="12">
+                                <RadzenText TextStyle="TextStyle.H4" class="mt-2"><b>Prescriped Medicines</b></RadzenText>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <RadzenDataGrid Data="@prescripedMedicines" TItem="PrescripedMedicine">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Name" Title="Medicine Name" />
+                                        <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Price" Title="Price" />
+                                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Quantity" Title="Quantity" />
+                                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Prescription" Title="Prescription" />
+                                            <RadzenDataGridColumn TItem="PrescripedMedicine" Title="Delete">
+                                                <Template Context="prescripedMedicines">
+                                                    <RadzenButton Click="() => Delete(prescripedMedicines.Id)" Icon="delete" ButtonStyle="ButtonStyle.Danger" />
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </MudItem>
+                                <MudItem xs="12" Class="text-center">
+                                    <RadzenButton Click="()=>Back()" Icon="save" ButtonStyle="ButtonStyle.Secondary" Style="width:100px;" class="mt-2">Back</RadzenButton>
+                                <RadzenButton Click="()=>Submit()" Icon="save" Style="width:100px;" class="mt-2">Submit</RadzenButton>
+                            </MudItem>
+                        }
+                    }
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.H4" class="mt-2"><b>Search Medicines</b></RadzenText>
+                        </MudItem>
+                        <MudItem xs="8">
+                            <RadzenTextBox @bind-Value="MedicineName" MaxLength="50" Placeholder="Search by medicine name" Style="width:100%;" />
+                        </MudItem>
+                        <MudItem xs="4">
+                            <RadzenButton Click="()=>GetMedicines(MedicineName)" ButtonStyle="ButtonStyle.Primary" Icon="search" />
+                            <RadzenButton Click="()=>Reset()" ButtonStyle="ButtonStyle.Secondary" Icon="refresh" class="ml-2" />
+                        </MudItem>
+                    <MudItem xs="12">
+                        @{
+                            if (medicines.Count != 0)
+                            {
+                                    <RadzenDataGrid Data="@medicines" AllowPaging="true" PageSize="5" AllowSorting="true" TItem="Medicines">
+                                    <Columns>
+                                            <RadzenDataGridColumn TItem="Medicines" Property="Name" Title="Medicine Name" />
+                                            <RadzenDataGridColumn TItem="Medicines" Property="Price" Title="Price" />
+                                            <RadzenDataGridColumn TItem="Medicines" Title="Available Count" >
+                                                <Template Context="medicines">
+                                                @(medicines.AvailableMedicinesCount != 0 ? medicines.AvailableMedicinesCount : "Out of stock")
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                            <RadzenDataGridColumn TItem="Medicines" Title="Add">
+                                                <Template Context="medicines">
+                                                    <RadzenButton Click="() => ShowDialog(medicines.Id)" ButtonStyle="ButtonStyle.Primary">Add</RadzenButton>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            }
+                            else
+                            {
+                                <RadzenText TextStyle="TextStyle.H6" class="mt-2">No Medicines Found...</RadzenText>
+                            }
+                        }
+                        </MudItem>
+                        <MudItem xs="12" Class="text-center">
+                            <RadzenButton Click="()=>Back()" Icon="save" ButtonStyle="ButtonStyle.Secondary" Style="width:100px;" class="mt-2">Back</RadzenButton>
+                        </MudItem>
+                </MudGrid>
+            }
+        }
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+<MudDialog @bind-IsVisible="IsView" Options="dialogOptions">
+    <TitleContent>
+        <RadzenText TextStyle="TextStyle.H4"><b>Previous Visit Report</b></RadzenText>
+    </TitleContent>
+    <DialogContent>
+        <MudContainer Style="max-height: 400px; overflow-y: scroll">
+            <MudGrid Spacing="1" Class="mt-2">
+                <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2" class="mt-3"><b>Select Month</b></RadzenText>
+                    </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2" class="mt-3"><b>:</b></RadzenText>
+            </MudItem>
+                    <MudItem xs="8">
+                        <MudSelect @bind-Value="Month" Margin="Margin.Dense" Placeholder="Select Month" Variant="MudBlazor.Variant.Outlined">
+                                            <MudSelectItem Value="@("1")" >January</MudSelectItem>
+                                            <MudSelectItem Value="@("2")" >February</MudSelectItem>
+                                            <MudSelectItem Value="@("3")" >March</MudSelectItem>
+                                            <MudSelectItem Value="@("4")" >April</MudSelectItem>
+                                            <MudSelectItem Value="@("5")" >May</MudSelectItem>
+                                            <MudSelectItem Value="@("6")" >June</MudSelectItem>
+                                            <MudSelectItem Value="@("7")" >July</MudSelectItem>
+                                            <MudSelectItem Value="@("8")" >August</MudSelectItem>
+                                            <MudSelectItem Value="@("9")" >September</MudSelectItem>
+                                            <MudSelectItem Value="@("10")" >October</MudSelectItem>
+                                            <MudSelectItem Value="@("11")" >November</MudSelectItem>
+                                            <MudSelectItem Value="@("12")" >December</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    @{
+                    if (patients.Count != 0 && Month != "")
+                {
+                    <MudItem xs="12" Class="mt-2">
+                        <RadzenDataGrid Data="patients.Where(p => p.Date.Month.ToString().Equals(Month)).ToList()" TItem="PatientHistory">
+                        <Columns>
+                                <RadzenDataGridColumn TItem="PatientHistory" Property="ConsultingTime" Title="Visited Time" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Title="VisitedDate" >
+                                    <Template Context="patientHistories">
+                                        @patientHistories.Date.ToShortDateString()
+                                </Template>
+                            </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="PatientHistory" Property="VisitedFor" Title="Visited For" />
+                                <RadzenDataGridColumn TItem="PatientHistory" Title="Action">
+                                    <Template Context="patientHistories">
+                                        <RadzenButton Click="() => ViewHistory(patientHistories.Id)" ButtonStyle="ButtonStyle.Primary">View</RadzenButton>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                        </RadzenDataGrid>
+                    </MudItem>
+                }
+                if(patient1 != null && patient1.Date.ToShortDateString() != DateTime.Now.ToShortDateString())
+                {
+                <MudItem xs="12" Class="mt-2">
+                    <RadzenText TextStyle="TextStyle.H4"><b>Patient Details</b></RadzenText>
+                </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Patient Name</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.FirstName @patient1.LastName</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Date</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.Date.ToShortDateString()</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Time</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.ConsultingTime</RadzenText>
+            </MudItem>
+            <MudItem xs="2">
+                <RadzenText TextStyle="TextStyle.Body2"><b>Visit For</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.VisitedFor</RadzenText>
+            </MudItem>
+                <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H5"><b>Test Details</b></RadzenText>
+                </MudItem>
+                <MudItem xs="2" >
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Height (cm)</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.Height</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Weight (Kg)</b></RadzenText>
+                </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.Weight</RadzenText>
+                </MudItem>
+                        <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Temparature (F)</b></RadzenText>
+                </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.TemperatureF</RadzenText>
+                </MudItem>
+                        <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Blood Preasure</b></RadzenText>
+                </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="3">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.BPLevel</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Blood Sugar Level</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2"><b>@patient1.SugarBeforeFood</b> in Before food and <b>@patient1.SugarAfterFood</b> in After Food.</RadzenText>
+                </MudItem>
+                <MudItem xs="2">
+                    <RadzenText TextStyle="TextStyle.Body2"><b>Comments</b></RadzenText>
+            </MudItem>
+            <MudItem xs="1" Class="text-center">
+                <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
+            </MudItem>
+            <MudItem xs="9">
+                <RadzenText TextStyle="TextStyle.Body2">@patient1.Comments</RadzenText>
+                </MudItem>
+                <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H5" class="mt-2"><b>Prescriped Medicines</b></RadzenText>
+                </MudItem>
+                <MudItem xs="12">
+                    <RadzenDataGrid Data="@prescripedMedicines1" TItem="PrescripedMedicine">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Name" Title="Medicine Name" />
+                            <RadzenDataGridColumn TItem="PrescripedMedicine" Property="Quantity" Title="Quantity" />
+                        </Columns>
+                    </RadzenDataGrid>
+                </MudItem>
+                }
+                }
+            </MudGrid>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudChip OnClick="()=>GoBack()" Size="Size.Large" Class="mr-4"><b>Go Back</b></MudChip>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    List<Tests> tests = new List<Tests>();
+    List<SuggestedTests> suggestedTests = new List<SuggestedTests>();
+    SuggestedTests suggestedTest = new SuggestedTests();
+    Appointment appointment = new Appointment();
+    List<PatientHistory> patients = new List<PatientHistory>();
+    PatientHistory patient = new PatientHistory();
+    PatientHistory patient1 = new PatientHistory();
+    PrescripedMedicine prescripedMedicine = new PrescripedMedicine();
+    List<PrescripedMedicine> prescripedMedicines = new List<PrescripedMedicine>();
+    List<PrescripedMedicine> prescripedMedicines1 = new List<PrescripedMedicine>();
+    List<Medicines> medicines = new List<Medicines>();
+    private MudBlazor.DialogOptions dialogOptions = new() { FullWidth = true, DisableBackdropClick = true, MaxWidth = MaxWidth.Medium };
+    private string ValidDate = string.Empty;
+    private string MedicineName = string.Empty;
+    private List<string> SuggestedTests = new List<string>();
+    private bool addMedicine { get; set; }
+    private bool IsView { get; set; }
+    private bool SuggestTest { get; set; }
+    private string Month { get; set; } = string.Empty;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<Appointment>($"api/Appointment/patient/{Id}");
+        if (result != null)
+        {
+            appointment = result;
+        }
+
+        var result1 = await Http.GetFromJsonAsync<List<Medicines>>($"api/Medicines/medicines");
+        if (result1 != null)
+        {
+            medicines = result1;
+        }
+
+        var result2 = await Http.GetFromJsonAsync<List<PatientHistory>>("api/PatientHistory");
+        if (result2 != null)
+        {
+            patients = result2.Where(r => r.DocterId.Equals(appointment.DocterId) && r.PatientUserName.Equals(appointment.PatientUserName)).ToList();
+        }
+
+        var result3 = await Http.GetFromJsonAsync<List<Tests>>($"api/Tests/tests");
+        if (result3 != null)
+        {
+            tests = result3;
+        }
+    }
+
+    private async Task GetMedicines(string name)
+    {
+        if (name != "")
+        {
+            var result = await Http.GetFromJsonAsync<List<Medicines>>($"api/Medicines/medicines");
+            if (result != null)
+            {
+                medicines = result.Where(r => r.Name.ToLower().Contains(name.ToLower())).ToList();
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                    Summary = "Please enter medicine name...",
+                Duration = 10000
+            };
+            notificationService.Notify(message);
+        }
+    }
+
+    private async Task Reset()
+    {
+        var result = await Http.GetFromJsonAsync<List<Medicines>>($"api/Medicines/medicines");
+        if (result != null)
+        {
+            medicines = result;
+        }
+    }
+
+    private void HandleSubmit()
+    {
+        addMedicine = true;
+    }
+
+    private void Back()
+    {
+        addMedicine = false;
+    }
+
+    private async Task ShowDialog(int id)
+    {
+        var medicine = medicines.Find(m => m.Id == id);
+        if(medicine != null)
+        {
+            prescripedMedicine.DocterId = appointment.DocterId;
+            prescripedMedicine.PatientUserName = appointment.PatientUserName;
+            prescripedMedicine.ConsultingTime = appointment.ConsultingTime;
+            prescripedMedicine.Date = appointment.Date;
+            prescripedMedicine.MedicineId = medicine.Id;
+            prescripedMedicine.Name = medicine.Name;
+            prescripedMedicine.Price = medicine.Price;
+            prescripedMedicine.MfgDate = medicine.MfgDate;
+            prescripedMedicine.ExpDate = medicine.ExpDate;
+
+            var result = await DialogService.OpenAsync("Medicine prescription", ds =>
+            @<div>
+                <MudGrid Class="mb-2">
+                    <MudItem xs="12">
+                        <RadzenText TextStyle="TextStyle.Body2">Quantity</RadzenText>
+                        <RadzenNumeric @bind-Value="prescripedMedicine.Quantity" Style="width:10%;" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="mt-2">Prescription</RadzenText>
+                        <RadzenTextArea @bind-Value="prescripedMedicine.Prescription" Cols="30" Rows="3" Style="width:100%;" />
+                    </MudItem>
+                </MudGrid>
+                <div class="row">
+                    <div class="col">
+                        <RadzenButton Text="Add" Click="() => Add(prescripedMedicine, medicine)" ButtonStyle="ButtonStyle.Danger" class="me-1 float-end" />
+                    </div>
+                </div>
+        </div>
+    );
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Error, Summary = "Medicine Not Found...!", Duration = 10000 };
+            notificationService.Notify(message);
+        }
+    }
+
+    private async Task Add(PrescripedMedicine prescripedMedicine, Medicines medicine)
+    {
+        if(prescripedMedicine.Prescription != "")
+        {
+            if(prescripedMedicine.Quantity > 0)
+            {
+                if (prescripedMedicine.Quantity < medicine.AvailableMedicinesCount)
+                {
+                    var response = await Http.PostAsJsonAsync("/api/PatientHistory/prescripedmedicine", prescripedMedicine);
+                    var result = await response.Content.ReadFromJsonAsync<List<PrescripedMedicine>>();
+                    if (response.IsSuccessStatusCode && result != null)
+                    {
+                        prescripedMedicines = result.Where(r => r.PatientUserName.Equals(appointment.PatientUserName) && r.ConsultingTime.Equals(appointment.ConsultingTime) && r.Date.Equals(appointment.Date)).ToList();
+
+                        NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Medicine Added Successfully...!", Duration = 10000 };
+                        notificationService.Notify(message);
+                        navigationManager.NavigateTo($"viewpatient/{Id}");
+                    }
+                }
+                else
+                {
+                    NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Medicine out of stock. Please check quantity of medicine..", Duration = 10000 };
+                    notificationService.Notify(message);
+                }
+            }
+            else
+            {
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Please enter quantity of medicine..", Duration = 10000 };
+                notificationService.Notify(message);               
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Please enter medicine prescription..", Duration = 10000 };
+            notificationService.Notify(message);
+        }
+    }
+
+    private async Task AddTest()
+    {
+        if(SuggestedTests != null)
+        {
+            HttpResponseMessage response;
+            foreach (var suggestedtest in SuggestedTests)
+            {
+                var test = tests.Find(t => t.Name.Equals(suggestedtest));
+                if(test != null) 
+                {
+                    suggestedTest.DocterId = appointment.DocterId;
+                    suggestedTest.PatientUserName = appointment.PatientUserName;
+                    suggestedTest.ConsultingTime = appointment.ConsultingTime;
+                    suggestedTest.Date = appointment.Date;
+                    suggestedTest.Name = test.Name;
+                    suggestedTest.Price = test.Price;
+                    suggestedTest.Quantity = 1;
+                }
+
+                response = await Http.PostAsJsonAsync("/api/Tests", suggestedTest);
+            }
+            var result = await Http.GetFromJsonAsync<List<SuggestedTests>>($"api/Tests/suggestedtests");
+            if (result != null)
+            {
+                suggestedTests = result.Where(r => r.PatientUserName.Equals(appointment.PatientUserName) && r.ConsultingTime.Equals(appointment.ConsultingTime) && r.Date.Equals(appointment.Date)).ToList();
+            }
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Tests Added Successfully...!", Duration = 10000 };
+            notificationService.Notify(message);
+        }
+    }
+
+    private async Task Submit()
+    {
+        patient.DocterId = appointment.DocterId;
+        patient.PatientUserName = appointment.PatientUserName;
+        patient.FirstName = appointment.FirstName;
+        patient.LastName = appointment.LastName;
+        patient.Age = appointment.Age;
+        patient.Gender = appointment.Gender;
+        patient.Email = appointment.Email;
+        patient.PhoneNo = appointment.PhoneNo;
+        patient.LastName = appointment.LastName;
+        patient.ConsultingTime = appointment.ConsultingTime;
+        patient.Date = appointment.Date;
+        patient.VisitedFor = appointment.VisitingFor;
+        patient.IsMedicineAdded = true;
+        patient.IsPaymentCompleted = false;
+
+        var response = await Http.PostAsJsonAsync("/api/PatientHistory", patient);
+        if (response.IsSuccessStatusCode)
+        {
+            await UpdateMedicine();
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Patient Details Submited Successfully...!", Duration = 10000 };
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("appoinments");
+        }
+    }
+
+    private async Task UpdateMedicine()
+    {
+        foreach (var prescribedMedicine in prescripedMedicines)
+        {
+            var medicine = medicines.Find(m => m.Id == prescribedMedicine.MedicineId);
+            if(medicine != null)
+            {
+                medicine.AvailableMedicinesCount = medicine.AvailableMedicinesCount - prescribedMedicine.Quantity;
+                var response = await Http.PutAsJsonAsync("api/Medicines", medicine);
+            }
+        }
+    }
+
+    private async Task ViewHistory(int id)
+    {
+        patient1 = patients.FirstOrDefault(p => p.Id.Equals(id));
+        {
+            var result = await Http.GetFromJsonAsync<List<PrescripedMedicine>>($"api/PatientHistory/prescripedmedicines");
+            if (result != null)
+            {
+                prescripedMedicines1 = result.Where(r => r.PatientUserName.Equals(patient1.PatientUserName) && r.ConsultingTime.Equals(patient1.ConsultingTime) && r.Date.Equals(patient1.Date)).ToList();
+            }
+        }
+    }
+
+    private void ViewPreviousHistories()
+    {
+        IsView = true;
+    }
+
+    private void GoBack()
+    {
+        Month = "";
+        IsView = false;
+    }
+
+    private async Task Delete(int id)
+    {
+        if (!await Js.InvokeAsync<bool>("confirm", "Are you sure you want to delete?"))
+        {
+            return;
+        }
+        else
+        {
+            var response = await Http.DeleteAsync($"api/PatientHistory/{id}");
+            var result = await response.Content.ReadFromJsonAsync<List<PrescripedMedicine>>();
+            if (response.IsSuccessStatusCode && result != null)
+            {
+                prescripedMedicines = result.Where(r => r.PatientUserName.Equals(appointment.PatientUserName) && r.ConsultingTime.Equals(appointment.ConsultingTime) && r.Date.Equals(appointment.Date)).ToList();
+
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Medicine Deleted Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+                navigationManager.NavigateTo($"viewpatient/{Id}");
+            }
+        }
+    }
+
+    private async Task DeleteTest(int id)
+    {
+        if (!await Js.InvokeAsync<bool>("confirm", "Are you sure you want to delete?"))
+        {
+            return;
+        }
+        else
+        {
+            var response = await Http.DeleteAsync($"api/Tests/{id}");
+            var result = await response.Content.ReadFromJsonAsync<List<SuggestedTests>>();
+            if (response.IsSuccessStatusCode && result != null)
+            {
+                suggestedTests = result.Where(r => r.PatientUserName.Equals(appointment.PatientUserName) && r.ConsultingTime.Equals(appointment.ConsultingTime) && r.Date.Equals(appointment.Date)).ToList();
+
+                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Test Deleted Successfully...!", Duration = 10000 };
+                notificationService.Notify(message);
+            }
+        }
+    }
+}

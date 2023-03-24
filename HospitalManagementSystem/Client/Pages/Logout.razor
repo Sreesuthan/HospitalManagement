@@ -1,0 +1,25 @@
+﻿@page "/logout"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+@inject IJSRuntime Js
+
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Js.InvokeAsync<bool>("confirm", "Are you want to logout?"))
+        {
+            return;
+        }
+        else
+        {
+            await LocalStorage.RemoveItemAsync("token");
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            var IsLoggedOut = true;
+            navigationManager.NavigateTo($"/{IsLoggedOut}", true);
+        }
+    }
+}

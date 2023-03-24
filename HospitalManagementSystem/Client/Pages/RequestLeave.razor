@@ -1,0 +1,129 @@
+﻿@page "/requestleave"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+
+<div class="col-lg-7 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+        @{
+            if (leaveRequests.Count != 0)
+            {
+                <MudGrid Class="mb-4">
+                    <MudItem xs="12" Class="mt-2 mb-2">
+                        <RadzenText TextStyle="TextStyle.H4" class="border-bottom">Leave Requests</RadzenText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <RadzenDataGrid Data="@leaveRequests" TItem="LeaveRequest">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="LeaveRequest" Title="Leave Needs On" >
+                                            <Template Context="leaveRequests">
+                                                @leaveRequests.Date.ToShortDateString()
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="LeaveRequest" Property="LeaveReason" Title="Leave Reason" />
+                                        <RadzenDataGridColumn TItem="LeaveRequest" Title="Status">
+                                            <Template Context="leaveRequests">
+                                                @(leaveRequests.IsConfirmed ? "Accepted" : "Pending")
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </MudItem>
+                </MudGrid>
+            }
+        }
+        <MudGrid Class="mb-4" Spacing="0">
+            <MudItem xs="12" Class="mt-2 mb-2">
+                <RadzenText TextStyle="TextStyle.H4" class="border-bottom">Request For Leave</RadzenText>
+            </MudItem>
+            <MudItem xs="12" Class="mt-4">
+                <RadzenText TextStyle="TextStyle.H6">Select Date</RadzenText>
+            </MudItem>
+            <MudItem xs="12">
+                <RadzenDatePicker @bind-Value="leaveRequest.Date" Inline="true" DateFormat="dd-MMM-yyyy" Min="DateTime.Today" DateRender=@DateRender Style="width:100%;" />
+            </MudItem>
+            <MudItem xs="12" Class="mt-4">
+                <RadzenText TextStyle="TextStyle.H6">Reason</RadzenText>
+            </MudItem>
+            <MudItem xs="12">
+                <RadzenTextArea @bind-Value="leaveRequest.LeaveReason" Cols="30" Rows="3" Style="width:100%;" />
+            </MudItem>
+            <MudItem xs="12" Class="text-center mt-4">
+                <RadzenButton Size="ButtonSize.Medium" Click="()=>RequestLeave1()" Variant="Radzen.Variant.Filled" ButtonStyle="ButtonStyle.Primary">Request Leave</RadzenButton>
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+
+@code {
+    LeaveRequest leaveRequest = new LeaveRequest();
+    List<LeaveRequest> leaveRequests = new List<LeaveRequest>();
+    public string Doctor { get; set; } = string.Empty;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userDetails = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+        if (userDetails != null && userDetails.IsAuthenticated)
+        {
+            Doctor = userDetails.Name;
+            var result = await Http.GetFromJsonAsync<List<LeaveRequest>>("api/LeaveRequest/leaveRequests");
+            if (result != null)
+            {
+                leaveRequests = result.Where(r => r.DocterUserName.Equals(Doctor)).ToList();
+            }
+        }
+    }
+
+    void DateRender(DateRenderEventArgs args)
+    {
+        args.Disabled = args.Disabled || args.Date.DayOfWeek == DayOfWeek.Sunday;
+    }
+
+    private async Task RequestLeave1()
+    {
+        if (leaveRequest.Date.ToShortDateString() != DateTime.Today.AddDays(-1).ToShortDateString())
+        {
+            if (leaveRequest.LeaveReason != "")
+            {
+                var userDetails = (await AuthStateProvider.GetAuthenticationStateAsync()).User.Identity;
+                if (userDetails != null && userDetails.IsAuthenticated)
+                {
+                    leaveRequest.DocterUserName = userDetails.Name;
+                    var response = await Http.PostAsJsonAsync("/api/LeaveRequest", leaveRequest);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Leave Requested Successfully...!", Duration = 10000 };
+                        notificationService.Notify(message);
+                        navigationManager.NavigateTo("/requestleave", true);
+                    }
+                }
+            }
+            else
+            {
+                NotificationMessage message = new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Warning,
+                        Summary = "Please enter reason for leave...",
+                        Duration = 10000
+                    };
+                notificationService.Notify(message);
+            }
+        }
+        else
+        {
+            NotificationMessage message = new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Please select date...",
+                    Duration = 10000
+                };
+            notificationService.Notify(message);
+        }
+    }
+}

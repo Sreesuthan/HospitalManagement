@@ -1,0 +1,255 @@
+﻿@page "/requestappointment/{id:int}/{patient}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+
+<div class="col-lg-7 ml-auto mr-auto border">
+    <div class="col-lg-11 ml-auto mr-auto">
+        <MudGrid Class="mb-4">
+            <MudItem xs="12" Class="mt-2 mb-2">
+                <RadzenText TextStyle="TextStyle.H4">Request Appointment</RadzenText>
+            </MudItem>
+            <MudItem xs="4">
+                <RadzenLabel Text="Date" class="mt-2" />
+            </MudItem>
+            <MudItem xs="8">
+                <RadzenDatePicker @bind-Value="appointment.Date" DateFormat="dd-MMM-yyyy" Min="DateTime.Today" DateRender=@DateRender Style="width:100%;">
+                    <FooterTemplate> 
+                        <div class="ml-4">
+                         <RadzenText TextStyle="TextStyle.Body1"><span style="height:20px; width:20px; color:#E35CD4; background-color:#E35CD4;">hlo</span> Indicates doctor not available.</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1"><span style="height:20px; width:20px; color:#EC8111; background-color:#EC8111;">hlo</span> Indicates appointments are filled.</RadzenText>
+                        </div>    
+                    </FooterTemplate>
+                </RadzenDatePicker>
+            </MudItem>
+            @{
+                if(appointment.Date > DateTime.Today.AddDays(-1))
+                {
+
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Time" class="mt-3" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <MudSelect @bind-Value="appointment.ConsultingTime" Margin="Margin.Dense" Placeholder="Select Time" Variant="MudBlazor.Variant.Outlined">
+                            @{
+                                if (doctor.ConsultingTime == "06:00 - 12:00")
+                                {
+                                    foreach (var Session in consultingSessions.Take(12))
+                                    {
+                                        if (appointments.Any(a => a.ConsultingTime.Equals(Session.Session) && a.Date.ToString().Equals(appointment.Date.ToString())))
+                                        {
+                                            <MudSelectItem Value="Session.Session" Disabled="true" >@Session.Session</MudSelectItem>
+                                        }
+                                        else
+                                        {
+                                            <MudSelectItem Value="Session.Session">@Session.Session</MudSelectItem>
+                                        }
+                                    }
+                                }
+                                else if (doctor.ConsultingTime == "12:00 - 18:00")
+                                {
+                                    foreach (var Session in consultingSessions.Skip(12).Take(12).ToList())
+                                    {
+                                        if (appointments.Any(a => a.ConsultingTime.Equals(Session.Session) && a.Date.ToShortDateString().Equals(appointment.Date.ToShortDateString())))
+                                        {
+                                            <MudSelectItem Value="Session.Session" Disabled="true">@Session.Session</MudSelectItem>
+                                        }
+                                        else
+                                        {
+                                            <MudSelectItem Value="Session.Session">@Session.Session</MudSelectItem>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (var Session in consultingSessions.TakeLast(12))
+                                    {
+                                        if (appointments.Any(a => a.ConsultingTime.Equals(Session.Session) && a.Date.ToString().Equals(appointment.Date.ToString())))
+                                        {
+                                            <MudSelectItem Value="Session.Session" Disabled="true">@Session.Session</MudSelectItem>
+                                        }
+                                        else
+                                        {
+                                            <MudSelectItem Value="Session.Session">@Session.Session</MudSelectItem>
+                                        }
+                                    }
+                                }
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <RadzenLabel Text="Visiting For" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8">
+                        <RadzenTextBox @bind-Value="appointment.VisitingFor" Placeholder="Enter reason for visiting us" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                }
+            }
+            <MudItem xs="12" Class="text-center mt-4">
+                <RadzenButton Size="ButtonSize.Medium" Click="()=>RequestAppointment1()" Variant="Radzen.Variant.Filled" ButtonStyle="ButtonStyle.Primary">Request Appointment</RadzenButton>
+            </MudItem>
+        </MudGrid>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter]
+    public string Patient { get; set; } = string.Empty;
+    List<ConsultingSession> consultingSessions = new List<ConsultingSession>
+    {
+       new ConsultingSession{ Id = 1, Session = "06:00 - 06:30" },
+       new ConsultingSession{ Id = 2, Session = "06:30 - 07:00" },
+       new ConsultingSession{ Id = 3, Session = "07:00 - 07:30" },
+       new ConsultingSession{ Id = 4, Session = "07:30 - 08:00" },
+       new ConsultingSession{ Id = 5, Session = "08:00 - 08:30" },
+       new ConsultingSession{ Id = 6, Session = "08:30 - 09:00" },
+       new ConsultingSession{ Id = 7, Session = "09:00 - 09:30" },
+       new ConsultingSession{ Id = 8, Session = "09:30 - 10:00" },
+       new ConsultingSession{ Id = 9, Session = "10:00 - 10:30" },
+       new ConsultingSession{ Id = 10, Session = "10:30 - 11:00" },
+       new ConsultingSession{ Id = 11, Session = "11:00 - 11:30" },
+       new ConsultingSession{ Id = 12, Session = "11:30 - 12:00" },
+       new ConsultingSession{ Id = 13, Session = "12:00 - 12:30" },
+       new ConsultingSession{ Id = 14, Session = "12:30 - 13:00" },
+       new ConsultingSession{ Id = 15, Session = "13:00 - 13:30" },
+       new ConsultingSession{ Id = 16, Session = "13:30 - 14:00" },
+       new ConsultingSession{ Id = 17, Session = "14:00 - 14:30" },
+       new ConsultingSession{ Id = 18, Session = "14:30 - 15:00" },
+       new ConsultingSession{ Id = 19, Session = "15:00 - 15:30" },
+       new ConsultingSession{ Id = 20, Session = "15:30 - 16:00" },
+       new ConsultingSession{ Id = 21, Session = "16:00 - 16:30" },
+       new ConsultingSession{ Id = 22, Session = "16:30 - 17:00" },
+       new ConsultingSession{ Id = 23, Session = "17:00 - 17:30" },
+       new ConsultingSession{ Id = 24, Session = "17:30 - 18:00" },
+       new ConsultingSession{ Id = 25, Session = "18:00 - 18:30" },
+       new ConsultingSession{ Id = 26, Session = "18:30 - 19:00" },
+       new ConsultingSession{ Id = 27, Session = "18:00 - 19:30" },
+       new ConsultingSession{ Id = 28, Session = "19:30 - 20:00" },
+       new ConsultingSession{ Id = 29, Session = "19:00 - 20:30" },
+       new ConsultingSession{ Id = 30, Session = "20:30 - 21:00" },
+       new ConsultingSession{ Id = 31, Session = "20:00 - 21:30" },
+       new ConsultingSession{ Id = 32, Session = "21:30 - 22:00" },
+       new ConsultingSession{ Id = 33, Session = "21:00 - 22:30" },
+       new ConsultingSession{ Id = 34, Session = "22:30 - 23:00" },
+       new ConsultingSession{ Id = 35, Session = "22:00 - 23:30" },
+       new ConsultingSession{ Id = 36, Session = "23:30 - 00:00" }
+    };
+
+    Appointment appointment = new Appointment();
+    List<Appointment> appointments = new List<Appointment>();
+    List<LeaveRequest> leaveRequests = new List<LeaveRequest>();
+    ApplicationUser doctor = new ApplicationUser();
+    List<DateTime> Dates = new List<DateTime>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result1 = await Http.GetFromJsonAsync<ApplicationUser>($"api/User/doctor/{Id}");
+        if (result1 != null)
+        {
+            doctor = result1;
+        }
+
+        var result = await Http.GetFromJsonAsync<List<Appointment>>("api/Appointment/appointments");
+        if (result != null)
+        {
+            appointments = result.Where(r => r.DocterId.Equals(doctor.Id)).ToList();
+        }
+
+        var result2 = await Http.GetFromJsonAsync<List<LeaveRequest>>("api/LeaveRequest/leaveRequests");
+        if (result2 != null)
+        {
+            leaveRequests = result2.Where(r => r.DocterUserName.Equals(doctor.Username)).ToList();
+            foreach(var request in leaveRequests)
+            {
+                if (request.IsConfirmed)
+                {
+                    int day = request.Date.Day;                             
+                    int month = request.Date.Month;                         
+                    int year = request.Date.Year;                           
+                    DateTime date = new DateTime(year, month, day);
+                    Dates.Add(date);
+                }
+            }
+        }
+    }
+
+    void DateRender(DateRenderEventArgs args)
+    {
+        if (Dates.Contains(args.Date) || args.Date.DayOfWeek == DayOfWeek.Sunday)
+        {
+            args.Attributes.Add("style", "background-color: #E35CD4; border-color: white;");
+        }
+        var sessions = appointments.Where(a => a.Date.ToShortDateString().Equals(args.Date.ToShortDateString())).ToList();
+        if(sessions.Count == 12)
+        {
+            args.Attributes.Add("style", "background-color: #EC8111; border-color: white;");
+        }
+    }
+
+    private async Task RequestAppointment1()
+    {
+        if (Id != 0 && Patient != "")
+        {
+            if (appointment.ConsultingTime != "")
+            {
+                if (appointment.VisitingFor != "")
+                {
+                    if (!Dates.Contains(appointment.Date) && appointment.Date.DayOfWeek != DayOfWeek.Sunday)
+                    {
+                        if (!appointments.Any(a => a.DocterId == Id && a.PatientUserName == Patient))
+                        {
+                            appointment.IsNew = true;
+                        }
+                        appointment.DocterId = Id;
+                        appointment.PatientUserName = Patient;
+                        var response = await Http.PostAsJsonAsync("/api/Appointment", appointment);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Appointment Requested Successfully...!", Duration = 10000 };
+                            notificationService.Notify(message);
+                            navigationManager.NavigateTo("/requestlist");
+                        }
+                    }
+                    else
+                    {
+                        NotificationMessage message = new NotificationMessage
+                            {
+                                Severity = NotificationSeverity.Warning,
+                                Summary = "Doctor not available in this date. Please select valid date...",
+                                Duration = 10000
+                            };
+                        notificationService.Notify(message);
+                    }
+                }
+                else
+                {
+                    NotificationMessage message = new NotificationMessage
+                        {
+                            Severity = NotificationSeverity.Warning,
+                            Summary = "Please enter reason for visiting us...",
+                            Duration = 10000
+                        };
+                    notificationService.Notify(message);
+                }
+            }
+            else
+            {
+                NotificationMessage message = new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Warning,
+                        Summary = "Please select Time...",
+                        Duration = 10000
+                    };
+                notificationService.Notify(message);
+            }
+        }
+    }
+}

@@ -1,0 +1,75 @@
+﻿@page "/login"
+@inject NavigationManager navigationManager
+@inject HttpClient Http
+@inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILocalStorageService LocalStorage
+
+
+<div class="col-lg-7 ml-auto mr-auto border">
+	<div class="col-lg-11 ml-auto mr-auto">
+		<RadzenText TextStyle="TextStyle.H3" TextAlign="TextAlign.Center" class="mt-2 mb-4">Welcome to Hospital</RadzenText>
+
+        <RadzenTemplateForm Data="@login" TItem="Login" Submit="HandleSubmit">
+            <RadzenCard class="mb-7">
+                <MudGrid Class="mb-4" Spacing="0">
+                    <MudItem xs="12">
+                    <RadzenText TextStyle="TextStyle.H4" class="border-bottom">Login</RadzenText>
+                    </MudItem>
+                    @{
+                        if (Error.Length > 0)
+                        {
+                            <MudItem xs="12">
+                                <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.Small" Variant="Radzen.Variant.Flat" Shade="Shade.Lighter">@Error</RadzenAlert>
+                            </MudItem>
+                        }
+                    }
+                    <MudItem xs="4" Class="mt-4 mb-6">
+                        <RadzenLabel Text="UserId" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8" Class="mt-4 mb-6">
+                        <RadzenTextBox @bind-Value="login.Username" MaxLength="50" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="4" Class="mb-6">
+                        <RadzenLabel Text="Password" class="mt-2" />
+                    </MudItem>
+                    <MudItem xs="8" Class="mb-6">
+                        <RadzenPassword @bind-Value="login.Password" Style="width:100%;" />
+                    </MudItem>
+                    <MudItem xs="12" Class="text-center">
+                        <RadzenButton ButtonType="Radzen.ButtonType.Submit" Icon="save" Style="width:100px;" class="mt-2">Login</RadzenButton>
+                    </MudItem>
+                </MudGrid>
+            </RadzenCard> 
+        </RadzenTemplateForm>
+	</div>
+</div>
+
+@code {
+    Login login = new Login();
+    public string Error { get; set; } = string.Empty;
+
+    public async Task HandleSubmit()
+    {
+        var response = await Http.PostAsJsonAsync("/api/User/login", login);
+        if (response.IsSuccessStatusCode)
+        {
+            var token = await response.Content.ReadAsStringAsync();
+            await LocalStorage.SetItemAsync("token", token);
+            await AuthStateProvider.GetAuthenticationStateAsync();
+
+            NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = "Signed in successfully...!", Duration = 10000};
+            notificationService.Notify(message);
+            navigationManager.NavigateTo("/");
+        }
+        if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            if (error != null)
+            {
+                Error = error;
+            }
+            navigationManager.NavigateTo("/login");
+        }
+    }
+}
