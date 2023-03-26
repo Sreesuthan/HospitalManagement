@@ -125,5 +125,39 @@ namespace HospitalManagementSystem.Server.Controllers
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
         }
+
+        [HttpPost("exporttoexcelmeds")]
+        public IActionResult ExportToExcelMeds(List<Export_Medicines> medicines)
+        {
+            var stream = new MemoryStream();
+
+            using (var package = new ExcelPackage(stream))
+            {
+                var workSheet = package.Workbook.Worksheets.Add("Sheet1");
+
+                workSheet.Cells["A1"].Value = "Name";
+                workSheet.Cells["B1"].Value = "Price";
+                workSheet.Cells["C1"].Value = "MfgDate";
+                workSheet.Cells["D1"].Value = "ExpDate";
+                workSheet.Cells["E1"].Value = "AvailableMedicinesCount";
+                int rowStart = 2;
+
+                foreach (var medicine in medicines)
+                {
+                    workSheet.Cells[string.Format("A{0}", rowStart)].Value = medicine.Name;
+                    workSheet.Cells[string.Format("B{0}", rowStart)].Value = medicine.Price;
+                    workSheet.Cells[string.Format("C{0}", rowStart)].Value = string.Format("{0:dd-MM-yyyy}", medicine.MfgDate);
+                    workSheet.Cells[string.Format("D{0}", rowStart)].Value = string.Format("{0:dd-MM-yyyy}", medicine.ExpDate);
+                    workSheet.Cells[string.Format("E{0}", rowStart)].Value = medicine.AvailableMedicinesCount;
+                    rowStart++; 
+                }
+                workSheet.Cells["A:AZ"].AutoFitColumns();
+                package.Save();
+            }
+            stream.Position = 0;
+            string excelName = $"Medicines_{DateTime.Now.ToString("ddMMyyyy")}.xlsx";
+
+            return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
+        }
     }
 }

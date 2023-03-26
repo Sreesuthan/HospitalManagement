@@ -123,7 +123,7 @@
             export_Medicines = result;
         }
 
-        var response = await Http.PostAsJsonAsync($"/api/Medicines/exporttoexcel", export_Medicines);
+        var response = await Http.PostAsJsonAsync($"/api/Medicines/exporttoexcelmeds", export_Medicines);
         if (!response.IsSuccessStatusCode)
         {
             await Js.InvokeVoidAsync("alert", "Error in export to excel file. Please try again.");
