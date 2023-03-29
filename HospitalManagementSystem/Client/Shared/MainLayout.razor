@@ -14,6 +14,7 @@
         <RadzenStack Orientation="Radzen.Orientation.Horizontal" AlignItems="Radzen.AlignItems.Center" Gap="0">
             <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
             <RadzenText TextStyle="TextStyle.H4" class="text-white">Quality Care Hospital</RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" Style="width:200px; text-align:center;" class="border border-light rounded-1 ml-4 mt-1 p-1 text-white">Call: 9876543210</RadzenText>
             <MudSpacer/>
             <AuthorizeView Roles="Admin">
                 <Authorized>

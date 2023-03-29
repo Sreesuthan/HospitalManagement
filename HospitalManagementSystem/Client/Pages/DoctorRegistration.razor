@@ -4,6 +4,8 @@
 @inject NavigationManager navigationManager
 @inject HttpClient Http
 @inject NotificationService notificationService
+@inject ISyncLocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 
 
 <div class="col-lg-7 ml-auto mr-auto border">
@@ -153,7 +155,9 @@
         new Diseases{Id=12, Disease= "Allergist"},
         new Diseases{Id=13, Disease= "Endocrinologist"}
     };
+    Timer timer = new Timer(1000);
     public string Error { get; set; } = string.Empty;
+    string token = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,7 +166,29 @@
         {
             states = result;
         }
+        StartTimer();
     }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
+        }
+    }
+
 
     public async Task HandleSubmit()
     {

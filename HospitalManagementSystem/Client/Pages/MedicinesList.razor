@@ -5,6 +5,8 @@
 @inject HttpClient Http
 @inject NotificationService notificationService
 @inject IJSRuntime Js
+@inject ISyncLocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 @inject Radzen.DialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
@@ -14,13 +16,15 @@
                 <MudItem xs="12">
                     <RadzenText TextStyle="TextStyle.H4" class="mt-2"><b>Medicines List</b></RadzenText>
                 </MudItem>
-                <MudItem xs="8">
+                <MudItem xs="7">
                     <RadzenTextBox @bind-Value="MedicineName" MaxLength="50" Placeholder="Search by medicine name" Style="width:100%;" />
                 </MudItem>
-                <MudItem xs="4">
+                <MudItem xs="2">
                     <RadzenButton Click="()=>GetMedicines(MedicineName)" ButtonStyle="ButtonStyle.Primary" Icon="search"/>
                     <RadzenButton Click="()=>Reset()" ButtonStyle="ButtonStyle.Secondary" Icon="refresh" class="ml-2" />
-                    <RadzenButton Click="() => ExportToExcel()" Icon="download" Text="Export to Excel" class="ml-2" Style="text-transform: none;" ButtonStyle="ButtonStyle.Info" />
+                </MudItem>
+                <MudItem xs="3">
+                    <RadzenButton Click="() => ExportToExcel()" Icon="download" Text="Export to Excel" Style="text-transform: none;" ButtonStyle="ButtonStyle.Info" />
                 </MudItem>
                 <MudItem xs="12">
                     @{
@@ -63,12 +67,15 @@
         </MudItem>
     </MudGrid>
 </MudContainer>
-
+@{
+}
 
 @code {
     List<Medicines> medicines = new List<Medicines>();
     List<Export_Medicines> export_Medicines = new List<Export_Medicines>();
+    Timer timer = new Timer(1000);
     private string MedicineName { get; set; } = string.Empty;
+    string token = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,6 +83,28 @@
         if (result != null)
         {
             medicines = result;
+        }
+
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 
@@ -132,7 +161,7 @@
         {
             var fileStream = response.Content.ReadAsStream();
             using var streamRef = new DotNetStreamReference(stream: fileStream);
-            await Js.InvokeVoidAsync("downloadFileFromStream", $"Medicines_{DateTime.Now.ToString("ddMMyyyy")}.xlsx", streamRef);
+            await Js.InvokeVoidAsync("downloadFileFromStream", $"Medicines_{DateTime.Now.ToString("dd-MM-yyyy hhmmss")}.xlsx", streamRef);
         }
     }
 }

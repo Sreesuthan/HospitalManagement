@@ -2,6 +2,8 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 @inject HttpClient Http
+@inject ISyncLocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 
 
 <div class="col-lg-10 ml-auto mr-auto border">
@@ -44,6 +46,8 @@
 
 @code {
     List<SuccessOrders> successOrders = new List<SuccessOrders>();
+    Timer timer = new Timer(1000);
+    string token = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -51,6 +55,27 @@
         if (result != null)
         {
             successOrders = result.Where(r => r.PrescribedMedicinesId == 0 && r.SuggestedTestsId == 0).ToList();
+        }
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 }

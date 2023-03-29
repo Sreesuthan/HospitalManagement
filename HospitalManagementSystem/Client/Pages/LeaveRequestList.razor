@@ -5,7 +5,7 @@
 @inject HttpClient Http
 @inject NotificationService notificationService
 @inject AuthenticationStateProvider AuthStateProvider
-@inject ILocalStorageService LocalStorage
+@inject ISyncLocalStorageService LocalStorage
 @inject Radzen.DialogService DialogService
 
 <div class="col-lg-10 ml-auto mr-auto border">
@@ -49,6 +49,8 @@
 @code {
     LeaveRequest leaveRequest = new LeaveRequest();
     List<LeaveRequest> leaveRequests = new List<LeaveRequest>();
+    Timer timer = new Timer(1000);
+    string token = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,6 +58,27 @@
         if (result != null)
         {
             leaveRequests = result;
+        }
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 

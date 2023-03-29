@@ -5,7 +5,7 @@
 @inject HttpClient Http
 @inject NotificationService notificationService
 @inject AuthenticationStateProvider AuthStateProvider
-@inject ILocalStorageService LocalStorage
+@inject ISyncLocalStorageService LocalStorage
 @inject Radzen.DialogService DialogService
 
 
@@ -50,7 +50,9 @@
 @code {
     List<Appointment> appointments = new List<Appointment>();
     Appointment appointment = new Appointment();
+    Timer timer = new Timer(1000);
     public string Patient { get; set; } = string.Empty;
+    string token = string.Empty;
     
     protected override async Task OnInitializedAsync()
     {
@@ -63,6 +65,27 @@
             {
                 appointments = result.Where(r => r.PatientUserName.Equals(Patient)).ToList();
             }
+        }
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 }

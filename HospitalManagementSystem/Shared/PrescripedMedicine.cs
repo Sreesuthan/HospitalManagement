@@ -20,7 +20,7 @@ namespace HospitalManagementSystem.Shared
         public decimal Price { get; set; }
         public DateTime MfgDate { get; set; } = DateTime.Now;
         public DateTime ExpDate { get; set; } = DateTime.Now;
-        public int Quantity { get; set; }
+        public int Quantity { get; set; } = 1;
         public string Prescription { get; set; } = string.Empty;
         public int MedicineId { get; set; }
     }

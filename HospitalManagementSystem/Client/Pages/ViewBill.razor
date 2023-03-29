@@ -6,6 +6,8 @@
 @inject NotificationService notificationService
 @inject IJSRuntime JS
 @inject Radzen.DialogService DialogService
+@inject ISyncLocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
     <MudGrid Justify="Justify.Center">
@@ -29,13 +31,6 @@
                         <MudItem xs="2">
                             <RadzenText TextStyle="TextStyle.Body2"><b>Tests Bill</b></RadzenText>
                         </MudItem>
-                        if (suggestedTests.Count != 0)
-                        {
-                            foreach (var test in suggestedTests)
-                            {
-                                TestsBill = TestsBill + test.Price;
-                            }
-                        }
                         <MudItem xs="1" Class="text-center">
                             <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
                         </MudItem>
@@ -45,13 +40,6 @@
                         <MudItem xs="2">
                             <RadzenText TextStyle="TextStyle.Body2"><b>Medicine Bill</b></RadzenText>
                         </MudItem>
-                        if (prescripedMedicines.Count != 0)
-                        {
-                            foreach (var medicine in prescripedMedicines)
-                            {
-                                MedicineBill = MedicineBill + (medicine.Price * medicine.Quantity);
-                            }
-                        }
                         <MudItem xs="1" Class="text-center">
                             <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
                         </MudItem>
@@ -61,11 +49,6 @@
                         <MudItem xs="2">
                             <RadzenText TextStyle="TextStyle.Body2"><b>GST (@gst.Value%)</b></RadzenText>
                         </MudItem>
-                        if (MedicineBill != 0 && ConsultationFee != 0 && gst != null)
-                        {
-                            GST = ((MedicineBill + ConsultationFee + TestsBill) * gst.Value) / 100;
-                            GST = decimal.Round(GST, 2, MidpointRounding.AwayFromZero);
-                        }
                         <MudItem xs="1" Class="text-center">
                             <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
                         </MudItem>
@@ -78,11 +61,6 @@
                         <MudItem xs="1" Class="text-center">
                             <RadzenText TextStyle="TextStyle.Body2"><b>:</b></RadzenText>
                         </MudItem>
-                        if (MedicineBill != 0 && ConsultationFee != 0 && GST != 0)
-                        {
-                            TotalBill = MedicineBill + ConsultationFee + TestsBill + GST;
-                            TotalBill = decimal.Round(TotalBill, 2, MidpointRounding.AwayFromZero);
-                        }
                         <MudItem xs="6">
                             <RadzenText TextStyle="TextStyle.Body2">Rs. @TotalBill</RadzenText>
                         </MudItem>
@@ -143,11 +121,13 @@
     Appointment appointment = new Appointment();
     List<SuggestedTests> suggestedTests = new List<SuggestedTests>();
     List<SuccessOrders> successOrders = new List<SuccessOrders>();
+    Timer timer = new Timer(1000);
     public Decimal MedicineBill { get; set; }
     public Decimal ConsultationFee { get; set; }
     public Decimal TestsBill { get; set; }
     public Decimal GST { get; set; }
     public Decimal TotalBill { get; set; }
+    string token = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -304,6 +284,56 @@
             {
                 gst = result5;
             }
+        }
+
+        if (suggestedTests.Count != 0)
+        {
+            foreach (var test in suggestedTests)
+            {
+                TestsBill = TestsBill + test.Price;
+            }
+        }
+
+        if (prescripedMedicines.Count != 0)
+        {
+            foreach (var medicine in prescripedMedicines)
+            {
+                MedicineBill = MedicineBill + (medicine.Price * medicine.Quantity);
+            }
+        }
+
+        if (MedicineBill != 0 && ConsultationFee != 0 && gst != null)
+        {
+            GST = ((MedicineBill + ConsultationFee + TestsBill) * gst.Value) / 100;
+            GST = decimal.Round(GST, 2, MidpointRounding.AwayFromZero);
+        }
+
+        if (MedicineBill != 0 && ConsultationFee != 0 && GST != 0)
+        {
+            TotalBill = MedicineBill + ConsultationFee + TestsBill + GST;
+            TotalBill = decimal.Round(TotalBill, 2, MidpointRounding.AwayFromZero);
+        }
+
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 

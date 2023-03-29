@@ -6,6 +6,8 @@
 @inject NotificationService notificationService
 @inject IJSRuntime Js
 @inject Radzen.DialogService DialogService
+@inject ISyncLocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
     <MudGrid Justify="Justify.Center">
@@ -441,6 +443,7 @@
     List<PrescripedMedicine> prescripedMedicines = new List<PrescripedMedicine>();
     List<PrescripedMedicine> prescripedMedicines1 = new List<PrescripedMedicine>();
     List<Medicines> medicines = new List<Medicines>();
+    Timer timer = new Timer(1000);
     private MudBlazor.DialogOptions dialogOptions = new() { FullWidth = true, DisableBackdropClick = true, MaxWidth = MaxWidth.Medium };
     private string ValidDate = string.Empty;
     private string MedicineName = string.Empty;
@@ -449,6 +452,7 @@
     private bool IsView { get; set; }
     private bool SuggestTest { get; set; }
     private string Month { get; set; } = string.Empty;
+    string token = string.Empty;
 
 
     protected override async Task OnInitializedAsync()
@@ -475,6 +479,27 @@
         if (result3 != null)
         {
             tests = result3;
+        }
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 

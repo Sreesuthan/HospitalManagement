@@ -2,6 +2,8 @@
 @inject NavigationManager navigationManager
 @inject HttpClient Http
 @inject NotificationService notificationService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISyncLocalStorageService LocalStorage
 
 
 <div class="col-lg-7 ml-auto mr-auto border">
@@ -121,8 +123,10 @@
         new Genders{ Id = 1, Gender = "Male" },
         new Genders{ Id = 2, Gender = "Female" }
     };
+    Timer timer = new Timer(1000);
     Register register = new Register();
     public string Error { get; set; } = string.Empty;
+    string token = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -130,6 +134,28 @@
         if (result != null)
         {
             states = result;
+        }
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (!string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            navigationManager.NavigateTo("/");
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 

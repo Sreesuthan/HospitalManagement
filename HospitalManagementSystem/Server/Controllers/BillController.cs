@@ -2,8 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Dapper;
-using Syncfusion.HtmlConverter;
-using Syncfusion.Pdf;
+using SelectPdf;
+//using Syncfusion.HtmlConverter;
+//using Syncfusion.Pdf;
 
 namespace HospitalManagementSystem.Server.Controllers
 {
@@ -24,20 +25,24 @@ namespace HospitalManagementSystem.Server.Controllers
         public async Task<IActionResult> GenaratePdf(List<SuccessOrders> successOrders)
         {
             string fileName = "";
-            HtmlToPdfConverter converter = new HtmlToPdfConverter(); 
-            BlinkConverterSettings blinkConverterSettings = new BlinkConverterSettings();
+            //HtmlToPdfConverter converter = new HtmlToPdfConverter(); 
+            //BlinkConverterSettings blinkConverterSettings = new BlinkConverterSettings();
 
-            converter.ConverterSettings = blinkConverterSettings;
-            string HtmlString = await CreateBody(successOrders);
-            string BaseUrl = "";
+            //converter.ConverterSettings = blinkConverterSettings;
+            //string HtmlString = await CreateBody(successOrders);
+            //string BaseUrl = "";
 
-            PdfDocument document = converter.Convert(HtmlString, BaseUrl);
+            //PdfDocument document = converter.Convert(HtmlString, BaseUrl);
+            HtmlToPdf HtmlToPdf = new HtmlToPdf();
+            PdfDocument document = HtmlToPdf.ConvertHtmlString(await CreateBody(successOrders));
+
             byte[]? response = null;
             using (MemoryStream ms = new MemoryStream())
             {
                 document.Save(ms);
                 response = ms.ToArray();
-                document.Close(true);
+                //document.Close(true);
+                document.Close();
 
                 ms.Position = 0;
             }

@@ -6,6 +6,8 @@
 @inject NotificationService notificationService
 @inject IJSRuntime Js
 @inject Radzen.DialogService DialogService
+@inject ISyncLocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
     <MudGrid Justify="Justify.Center">
@@ -42,8 +44,11 @@
 
 @code {
     ApplicationUser admin = new ApplicationUser();
+    Timer timer = new Timer(1000);
     private string InitialEmail { get; set; } = string.Empty;
     private string InitialPassword { get; set; } = string.Empty;
+    string token = string.Empty;
+
     protected override async Task OnInitializedAsync()
     {
         var result = await Http.GetFromJsonAsync<List<ApplicationUser>>($"api/User");
@@ -57,7 +62,29 @@
                 InitialPassword = admin.EmailPassword;
             }
         }
+        StartTimer();
     }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
+        }
+    }
+
 
     private async Task HandleSubmit()
     {

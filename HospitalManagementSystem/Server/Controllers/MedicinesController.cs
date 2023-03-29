@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using Stripe;
+using System.Drawing;
 
 namespace HospitalManagementSystem.Server.Controllers
 {
@@ -121,7 +123,7 @@ namespace HospitalManagementSystem.Server.Controllers
                 package.Save();
             }
             stream.Position = 0;
-            string excelName = $"Medicines_{DateTime.Now.ToString("ddMMyyyy")}.xlsx";
+            string excelName = $"Medicines_{DateTime.Now.ToString("dd-MM-yyyy hhmmss")}.xlsx";
 
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelName);
         }
@@ -140,18 +142,40 @@ namespace HospitalManagementSystem.Server.Controllers
                 workSheet.Cells["C1"].Value = "MfgDate";
                 workSheet.Cells["D1"].Value = "ExpDate";
                 workSheet.Cells["E1"].Value = "AvailableMedicinesCount";
+                workSheet.Row(1).Style.Font.Bold = true;
+                workSheet.Row(2).Style.Font.Italic = true;
+                workSheet.Row(3).Style.Font.Size = 14;
+                workSheet.Row(5).Style.Font.Name = "Times New Roman";
+                workSheet.Row(4).Style.Font.UnderLine = true;
+                workSheet.Row(7).Style.TextRotation = 90;
+                workSheet.Row(8).Style.Hidden = true;
+                workSheet.Row(9).Style.Locked = true;
+                workSheet.Row(10).Style.QuotePrefix = true;
                 int rowStart = 2;
 
                 foreach (var medicine in medicines)
                 {
+                    if(medicine.AvailableMedicinesCount == 0)
+                    {
+                        workSheet.Row(rowStart).Style.Font.Color.SetColor(Color.Red);
+                    }
                     workSheet.Cells[string.Format("A{0}", rowStart)].Value = medicine.Name;
                     workSheet.Cells[string.Format("B{0}", rowStart)].Value = medicine.Price;
                     workSheet.Cells[string.Format("C{0}", rowStart)].Value = string.Format("{0:dd-MM-yyyy}", medicine.MfgDate);
                     workSheet.Cells[string.Format("D{0}", rowStart)].Value = string.Format("{0:dd-MM-yyyy}", medicine.ExpDate);
                     workSheet.Cells[string.Format("E{0}", rowStart)].Value = medicine.AvailableMedicinesCount;
-                    rowStart++; 
+                    rowStart++;
                 }
-                workSheet.Cells["A:AZ"].AutoFitColumns();
+                for (int i = 1; i <= rowStart; i++)
+                {
+                    int j = i % 2;
+                    if (j == 0)
+                    {
+                        workSheet.Row(i).Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        workSheet.Row(i).Style.Fill.BackgroundColor.SetColor(Color.LightPink);
+                    }
+                }
+                    workSheet.Cells["A:AZ"].AutoFitColumns();
                 package.Save();
             }
             stream.Position = 0;

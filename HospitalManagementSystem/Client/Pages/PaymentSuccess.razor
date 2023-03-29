@@ -1,7 +1,6 @@
 ﻿@page "/paymentsuccess/{id:int}"
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
-@using System.Timers
 @inject NavigationManager navigationManager
 @inject HttpClient Http
 @inject IJSRuntime JS
@@ -37,6 +36,7 @@
     SuccessOrders SuccessOrder = new SuccessOrders();
     List<SuccessOrders> successOrders = new List<SuccessOrders>();
     List<SuccessOrders> successOrders1 = new List<SuccessOrders>();
+    Timer timer = new Timer(1000);
     public Decimal MedicineBill { get; set; }
     public Decimal ConsultationFee { get; set; }
     public Decimal TestsBill { get; set; }
@@ -265,7 +265,6 @@
 
     void StartTimer()
     {
-        Timer timer = new Timer(1000);
         timer.Start();
         timer.Elapsed += IncrementValue;
     }
@@ -280,6 +279,7 @@
         else
         {
             navigationManager.NavigateTo($"viewbill/{Id}", true);
+            timer.Stop();
         }
     }
 

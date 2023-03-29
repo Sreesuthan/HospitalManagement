@@ -4,6 +4,7 @@
 @inject NotificationService notificationService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ILocalStorageService LocalStorage
+@inject ISyncLocalStorageService LocalStorage1
 
 
 <div class="col-lg-7 ml-auto mr-auto border">
@@ -47,8 +48,35 @@
 
 @code {
     Login login = new Login();
+    Timer timer = new Timer(1000);
     public string Error { get; set; } = string.Empty;
+    public string token { get; set; } = string.Empty;
 
+    protected override void OnInitialized()
+    {
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage1.GetItemAsString("token");
+        if (!string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            navigationManager.NavigateTo("/");
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
+        }
+    }
     public async Task HandleSubmit()
     {
         var response = await Http.PostAsJsonAsync("/api/User/login", login);

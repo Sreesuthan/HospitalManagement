@@ -6,6 +6,8 @@
 @inject NotificationService notificationService
 @inject IJSRuntime Js
 @inject Radzen.DialogService DialogService
+@inject ISyncLocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
     <MudGrid Justify="Justify.Center">
@@ -51,7 +53,9 @@
 
 @code {
     List<Tests> tests = new List<Tests>();
+    Timer timer = new Timer(1000);
     private string TestName { get; set; } = string.Empty;
+    string token = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -59,6 +63,27 @@
         if (result != null)
         {
             tests = result;
+        }
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 

@@ -7,19 +7,22 @@
 @inject NotificationService notificationService
 @inject IJSRuntime Js
 @inject Radzen.DialogService DialogService
+@inject ISyncLocalStorageService LocalStorage
+@inject AuthenticationStateProvider AuthStateProvider
+@inject MudBlazor.ISnackbar snackBar
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
     <MudGrid Justify="Justify.Center">
         <MudItem xs="10">
             <RadzenTemplateForm Data="@medicine" TItem="Medicines" Submit="HandleSubmit">
                 <MudGrid Class="mt-2">
-                    <MudItem xs="3">
+                    <MudItem xs="4">
                         <RadzenText TextStyle="TextStyle.H4"><b>Add Medicine</b></RadzenText>
                     </MudItem>
-                    <MudItem xs="9">
+                    <MudItem xs="8">
                         <RadzenButton Click="() => ExportToExcel()" Icon="download" Text="Download Excel Template" class="ml-2 mt-2" Style="float:right; text-transform: none;" ButtonStyle="ButtonStyle.Secondary" />
-                        <InputFile id="fileInput" OnChange="OnFileChange" hidden />
-                        <MudButton HtmlTag="label" Variant="MudBlazor.Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload" for="fileInput" Style="float:right; text-transform: none;" Class="mt-2">Import from Excel</MudButton>
+                        <MudFileUpload id="fileInput" T="IBrowserFile" Accept=".xlsx" OnFilesChanged="OnFileChange" MaximumFileCount="1" />
+                        <MudButton HtmlTag="label" Variant="MudBlazor.Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload" for="fileInput" Style="float:right; text-transform: none; margin-top:2px;">Import from Excel</MudButton>
                     </MudItem>
                     @{
                         if (Error.Length > 0)
@@ -30,34 +33,34 @@
                         }
                     }
                     <MudItem xs="2" Class="mt-2">
-                        <RadzenText TextStyle="TextStyle.Body2"><b>Medicine Name</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Medicine Name :</b></RadzenText>
                     </MudItem>
-                    <MudItem xs="10">
-                        <RadzenTextBox @bind-Value="medicine.Name" MaxLength="50" Placeholder="Enter Medicine Name" Style="width:75%;" />
-                    </MudItem>
-                    <MudItem xs="2" Class="mt-2">
-                        <RadzenText TextStyle="TextStyle.Body2"><b>Mfg. Date</b></RadzenText>
-                    </MudItem>
-                    <MudItem xs="4">
-                        <RadzenDatePicker @bind-Value="medicine.MfgDate" DateFormat="dd-MMM-yyyy" Max="DateTime.Today" Style="width:100%;" />
+                    <MudItem xs="6">
+                        <RadzenTextBox @bind-Value="medicine.Name" MaxLength="50" Placeholder="Enter Medicine Name" Style="width:100%;" />
                     </MudItem>
                     <MudItem xs="2" Class="mt-2">
-                        <RadzenText TextStyle="TextStyle.Body2"><b>Exp. Date</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Price (Rs.) :</b></RadzenText>
                     </MudItem>
-                    <MudItem xs="4">
-                        <RadzenDatePicker @bind-Value="medicine.ExpDate" DateFormat="dd-MMM-yyyy" Min="DateTime.Today" Style="width:100%;" />
+                    <MudItem xs="2">
+                        <RadzenNumeric @bind-Value="medicine.Price" Placeholder="Ex. 10.99"  Style="max-width:150px;" />
                     </MudItem>
                     <MudItem xs="2" Class="mt-2">
-                        <RadzenText TextStyle="TextStyle.Body2"><b>Price (Rs.)</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Mfg. Date :</b></RadzenText>
                     </MudItem>
-                    <MudItem xs="4">
-                        <RadzenNumeric @bind-Value="medicine.Price" Placeholder="Ex. 10.99"  Style="width:100%;" />
+                    <MudItem xs="2">
+                        <RadzenDatePicker @bind-Value="medicine.MfgDate" DateFormat="dd-MMM-yyyy" Max="DateTime.Today" Style="max-width:150px;" />
+                    </MudItem>
+                    <MudItem xs="2" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Exp. Date :</b></RadzenText>
+                    </MudItem>
+                    <MudItem xs="2">
+                        <RadzenDatePicker @bind-Value="medicine.ExpDate" DateFormat="dd-MMM-yyyy" Min="DateTime.Today" Style="max-width:150px;" />
                     </MudItem>
                             <MudItem xs="2" Class="mt-2">
-                        <RadzenText TextStyle="TextStyle.Body2"><b>Medicines Count</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2"><b>Medicine Count :</b></RadzenText>
                     </MudItem>
-                    <MudItem xs="4">
-                        <RadzenNumeric @bind-Value="medicine.AvailableMedicinesCount" Style="width:100%;" />
+                    <MudItem xs="2">
+                        <RadzenNumeric @bind-Value="medicine.AvailableMedicinesCount" Style="max-width:150px;" />
                     </MudItem>
                     <MudItem xs="12" Class="text-center">
                         <RadzenButton ButtonType="Radzen.ButtonType.Submit" Style="width:100px;" class="mt-2">Submit</RadzenButton>
@@ -74,10 +77,38 @@
     List<Medicines> medicines = new List<Medicines>();
     List<Medicines> medicinesFromExcel = new List<Medicines>();
     List<Export_Medicines> export_Medicines = new List<Export_Medicines>();
+    Timer timer = new Timer(1000);
     public string Error { get; set; } = string.Empty;
     public int InsertCount { get; set; }
     public int UpdateCount { get; set; }
     public int CancelCount { get; set; }
+    string token = string.Empty;
+
+
+    protected override void OnInitialized()
+    {
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
+        }
+    }
 
     private async Task HandleSubmit()
     {
@@ -168,9 +199,17 @@
                         }
                     }
                 }
-
-                NotificationMessage message = new NotificationMessage { Severity = NotificationSeverity.Success, Summary = $"Medicines Saved Successfully...! {(InsertCount > 0 ? $"{(InsertCount == 1 ? $" {InsertCount} medicine added." : $" {InsertCount} medicines added.")}" : "")} {(UpdateCount > 0 ? $"{(UpdateCount == 1 ? $"{UpdateCount} medicine updated." : $"{UpdateCount} medicines updated.")} " : "")} {(CancelCount > 0 ? $"{(CancelCount == 1 ? $" and {CancelCount} medicine canceled." : $" and {CancelCount} medicines canceled.")}" : "")}", Duration = 10000 };
-                notificationService.Notify(message);
+                
+                snackBar.Add(
+                    @<div>
+                        <h6>Medicines Imported Successfully...!</h6>
+                        <ul>
+                            <li>@(InsertCount > 0 ? $"{(InsertCount == 1 ? $"{InsertCount} medicine added." : $"{InsertCount} medicines added.")}" : "")</li>
+                            <li>@(UpdateCount > 0 ? $"{(UpdateCount == 1 ? $"{UpdateCount} medicine updated." : $"{UpdateCount} medicines updated.")} " : "")</li>
+                            <li>@(CancelCount > 0 ? $"{(CancelCount == 1 ? $" and {CancelCount} medicine canceled." : $" and {CancelCount} medicines canceled.")}" : "")</li>
+                        </ul>
+                    </div>, Severity.Success
+                    );
                 navigationManager.NavigateTo("addmedicine");
             }
             if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)

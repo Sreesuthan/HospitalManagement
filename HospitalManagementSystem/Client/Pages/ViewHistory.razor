@@ -5,7 +5,7 @@
 @inject HttpClient Http
 @inject NotificationService notificationService
 @inject AuthenticationStateProvider AuthStateProvider
-@inject ILocalStorageService LocalStorage
+@inject ISyncLocalStorageService LocalStorage
 @inject Radzen.DialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge">
@@ -225,8 +225,35 @@
     public int Id { get; set; }
 
     PatientHistory patient = new PatientHistory();
-    List<PrescripedMedicine> prescripedMedicines = new List<PrescripedMedicine>(); 
+    List<PrescripedMedicine> prescripedMedicines = new List<PrescripedMedicine>();
+    Timer timer = new Timer(1000);
     public Decimal TotalBill { get; set; }
+    string token = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
+        }
+    }
 
     protected override async Task OnParametersSetAsync()
     {

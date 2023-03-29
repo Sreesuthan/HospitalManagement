@@ -4,6 +4,7 @@
 @inject NavigationManager navigationManager
 @inject HttpClient Http
 @inject NotificationService notificationService
+@inject ISyncLocalStorageService LocalStorage
 @inject AuthenticationStateProvider AuthStateProvider
 
 
@@ -47,8 +48,10 @@
 
 @code {
     List<PatientHistory> patientHistories = new List<PatientHistory>();
+    Timer timer = new Timer(1000);
 
     public string PatientUserName { get; set; } = string.Empty;
+    string token = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -61,6 +64,27 @@
             {
                 patientHistories = result.Where(r => r.PatientUserName.Equals(PatientUserName)).ToList();
             }
+        }
+        StartTimer();
+    }
+
+    void StartTimer()
+    {
+        timer.Start();
+        timer.Elapsed += CheckCurrentState;
+    }
+
+    private async void CheckCurrentState(object o, ElapsedEventArgs args)
+    {
+        token = LocalStorage.GetItemAsString("token");
+        if (string.IsNullOrEmpty(token))
+        {
+            await AuthStateProvider.GetAuthenticationStateAsync();
+            timer.Stop();
+        }
+        else
+        {
+            StateHasChanged();
         }
     }
 
